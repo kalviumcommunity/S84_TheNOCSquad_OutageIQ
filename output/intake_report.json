@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-07-29T15:21:58.919528",
+  "filepath": "data/raw/sample.csv",
+  "validations": {
+    "file_exists": {
+      "passed": true,
+      "message": "File exists and has content"
+    },
+    "format": {
+      "passed": true,
+      "message": "Format valid: csv"
+    },
+    "encoding": {
+      "passed": true,
+      "message": "Detected: ascii (confidence: 100.0%)",
+      "detected_encoding": "ascii"
+    },
+    "schema": {
+      "passed": true,
+      "message": "Schema valid: 4 columns present"
+    }
+  },
+  "statistics": {
+    "rows": 3,
+    "columns": 4,
+    "file_size_mb": 0.00015,
+    "bytes": 159
+  }
+}
