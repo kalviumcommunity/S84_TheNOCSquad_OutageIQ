@@ -86,3 +86,11 @@ python -m unittest discover -s tests
 Copy `.env.example` to `.env` before running local analysis, then fill in your own data paths and scoring values. The project expects environment variables for source data locations, processed output locations, and configurable Impact Score weights; no real secrets should be committed.
 
 If you are extending the project, keep the PRD and tests aligned with the data pipeline so changes to ingestion, scoring, or reporting stay traceable.
+
+## About The NOC Squad
+
+The NOC Squad is the team behind OutageIQ. The project is focused on helping operations teams move from reactive outage triage to impact-based prioritization, so the busiest and most business-critical incidents rise to the top first.
+
+In practice, that means giving the squad one place to review outage signals, complaint pressure, and regional usage data, then turning those inputs into an explainable priority queue and leadership-ready reporting.
+
+The long-term goal is to make outage response faster, clearer, and easier to defend with data.
