@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { login } from '../lib/api';
 import type { AppUser } from '../types';
 
-export default function LoginPage({ onLogin }: { onLogin: (user: AppUser) => void }) {
+export default function LoginPage({
+  onLogin,
+  onBackToLanding,
+}: {
+  onLogin: (user: AppUser) => void;
+  onBackToLanding?: () => void;
+}) {
   const [username, setUsername] = useState('rahul');
   const [password, setPassword] = useState('outageiq-demo');
   const [error, setError] = useState('');
@@ -11,9 +17,16 @@ export default function LoginPage({ onLogin }: { onLogin: (user: AppUser) => voi
   return (
     <div className="login-shell">
       <div className="login-card">
-        <div className="login-badge">OutageIQ Secure Access</div>
+        <div className="login-card-top">
+          <div className="login-badge">OutageIQ Secure Access</div>
+          {onBackToLanding ? (
+            <button className="text-link" onClick={onBackToLanding}>
+              ← Back to Landing
+            </button>
+          ) : null}
+        </div>
         <h2>Login Page</h2>
-        <p>Access the dashboard duplicate backed by the isolated NOCSquad API.</p>
+        <p>Access the command center backed by the NOCSquad API.</p>
 
         <label>
           Username

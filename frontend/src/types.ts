@@ -1,4 +1,4 @@
-export type PageKey = 'login' | 'overview' | 'queue' | 'regional' | 'analytics' | 'export';
+export type PageKey = 'landing' | 'login' | 'overview' | 'queue' | 'regional' | 'analytics' | 'export';
 
 export interface OutageRecord {
   id: string;

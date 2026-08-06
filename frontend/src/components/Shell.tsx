@@ -1,6 +1,7 @@
 import type { PageKey, AppUser } from '../types';
 
 const pages: Array<{ key: PageKey; label: string; note: string }> = [
+  { key: 'landing', label: 'Landing Page', note: 'Product showcase' },
   { key: 'overview', label: 'Outage IQ Overview', note: 'Command center' },
   { key: 'queue', label: 'Outage Queue', note: 'Ranked incidents' },
   { key: 'regional', label: 'Regional View', note: 'Geo impact' },

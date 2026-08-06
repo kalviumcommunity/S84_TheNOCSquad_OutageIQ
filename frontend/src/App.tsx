@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAnalytics, getOutages, getOverview, getRegions } from './lib/api';
+import LandingPage from './pages/landing-page';
 import LoginPage from './pages/login-page';
 import OverviewPage from './pages/outage-iq-overview-page';
 import QueuePage from './pages/outage-queue-page';
@@ -10,7 +11,7 @@ import Shell from './components/Shell';
 import type { AnalyticsPayload, AppUser, DashboardPayload, OutageRecord, PageKey, RegionRecord } from './types';
 
 export default function App() {
-  const [page, setPage] = useState<PageKey>('login');
+  const [page, setPage] = useState<PageKey>('landing');
   const [user, setUser] = useState<AppUser | null>(null);
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [regions, setRegions] = useState<RegionRecord[]>([]);
@@ -23,7 +24,6 @@ export default function App() {
     const storedUser = sessionStorage.getItem('outageiq_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser) as AppUser);
-      setPage('overview');
     }
   }, []);
 
@@ -56,8 +56,46 @@ export default function App() {
     void loadData();
   }, [user]);
 
+  // Guest Landing View
+  if (page === 'landing') {
+    return (
+      <LandingPage
+        onNavigate={(nextPage) => {
+          if (nextPage === 'overview' && !user) {
+            setPage('login');
+          } else {
+            setPage(nextPage);
+          }
+        }}
+        isLoggedIn={!!user}
+      />
+    );
+  }
+
+  // Unauthenticated Login View
+  if (!user && page === 'login') {
+    return (
+      <LoginPage
+        onLogin={(nextUser) => {
+          setUser(nextUser);
+          setPage('overview');
+        }}
+        onBackToLanding={() => setPage('landing')}
+      />
+    );
+  }
+
+  // Fallback if not logged in but on dashboard page
   if (!user) {
-    return <LoginPage onLogin={(nextUser) => setUser(nextUser)} />;
+    return (
+      <LoginPage
+        onLogin={(nextUser) => {
+          setUser(nextUser);
+          setPage('overview');
+        }}
+        onBackToLanding={() => setPage('landing')}
+      />
+    );
   }
 
   return (
@@ -69,7 +107,7 @@ export default function App() {
         sessionStorage.removeItem('outageiq_user');
         sessionStorage.removeItem('outageiq_token');
         setUser(null);
-        setPage('login');
+        setPage('landing');
       }}
     >
       {loading ? <div className="status-banner">Loading live dashboard data...</div> : null}
@@ -81,4 +119,4 @@ export default function App() {
       {page === 'export' ? <ExportPage outages={outages} /> : null}
     </Shell>
   );
-}
+}
