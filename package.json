@@ -4,8 +4,10 @@
   "version": "1.0.0",
   "scripts": {
     "test:python": "python3 -m unittest discover -s tests",
-    "test:backend": "npm --prefix backend test",
-    "test:frontend": "npm --prefix frontend test",
-    "test": "npm run test:python && npm run test:backend && npm run test:frontend"
+    "test:backend": "python3 -m unittest discover -s tests",
+    "test:frontend": "npm --prefix ui test",
+    "test:ui": "npm --prefix ui test",
+    "test:e2e": "npm --prefix ui test",
+    "test": "npm run test:python && npm run test:ui"
   }
 }
