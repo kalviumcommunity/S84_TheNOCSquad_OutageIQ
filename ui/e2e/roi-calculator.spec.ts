@@ -18,6 +18,7 @@ test.describe('ROI Savings Calculator Component (PRD Sec 10)', () => {
     const sliders = roiSection.locator('input[type="range"]');
 
     await sliders.nth(0).fill('200');
+    await sliders.nth(0).dispatchEvent('input');
 
     await expect(roiSection.locator('text=360 hrs')).toBeVisible();
   });
