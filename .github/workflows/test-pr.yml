@@ -1,6 +1,8 @@
 name: PR Test Suite
 
 on:
+  push:
+    branches: [ main, master ]
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -24,27 +26,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Install Backend dependencies
+      - name: Install UI dependencies
         run: |
-          cd backend
+          cd ui
           npm ci
 
-      - name: Install Frontend dependencies
+      - name: Install Playwright Browsers
         run: |
-          cd frontend
-          npm ci
+          cd ui
+          npx playwright install --with-deps chromium
 
       - name: Run Python unit tests
         run: python3 -m unittest discover -s tests
 
-      - name: Run Backend unit & integration tests
-        run: npm --prefix backend test
-
-      - name: Run Frontend component & unit tests
-        run: npm --prefix frontend test
+      - name: Run Playwright End-to-End Tests
+        run: npm --prefix ui test
