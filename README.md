@@ -2,7 +2,7 @@
 
 OutageIQ is the NOC Squad's network outage impact prioritization workspace. It brings together outage alerts, customer complaints, and region usage metrics so the team can rank active incidents by business and customer impact instead of relying on severity codes alone.
 
-The product direction comes from [PRD.md](PRD.md), which defines the v1 goal: ingest three data streams, clean and merge them, compute a transparent Impact Score, and surface a prioritized queue for engineers and leadership.
+The product direction comes from [`docs/PRD.md`](docs/PRD.md), which defines the v1 goal: ingest three data streams, clean and merge them, compute a transparent Impact Score, and surface a prioritized queue for engineers and leadership. The full implementation roadmap is documented in [`docs/PLANNER.md`](docs/PLANNER.md).
 
 ## What The Project Does
 
@@ -16,7 +16,7 @@ OutageIQ is designed to:
 
 ## Team Workflow
 
-The intended team workflow follows the PRD and the current test coverage:
+The intended team workflow follows the PRD and the test coverage:
 
 1. Ingest source data from outage alerts, complaint logs, and region usage snapshots.
 2. Validate schemas, clean records, and deduplicate the inputs.
@@ -35,62 +35,75 @@ This workflow is implemented and tested around the following behavior:
 
 ## Repository Layout
 
-- `PRD.md` is the product definition and source of truth for scope, scoring, and workflow.
-- `README.md` is the project overview and contributor entry point.
-- `requirements.txt` lists the Python dependencies used by the analytics workflow.
-- `analytics-workspace-setup/data/raw/` holds raw outage, complaint, and usage files.
-- `analytics-workspace-setup/data/processed/` holds cleaned and merged datasets ready for analysis.
-- `analytics-workspace-setup/notebooks/` holds exploratory analysis and dashboard prototypes.
-- `analytics-workspace-setup/scripts/` holds the reusable ingestion, scoring, and reporting modules.
-- `analytics-workspace-setup/output/` holds exported reports and derived artifacts.
-- `tests/` contains the behavior checks that document the expected workflow.
+```
+.
+├── docs/                     # Specifications and engineering roadmaps
+│   ├── PRD.md                # Product Requirements Document
+│   └── PLANNER.md            # 10-Phase Implementation & Test Planner
+├── frontend/                 # Next.js 16 Web Application & UI Tests
+│   ├── app/                  # App Router pages and layout
+│   ├── components/           # UI components (Queue, Simulator, ROI, etc.)
+│   ├── e2e/                  # Playwright End-to-End Test Suite
+│   └── package.json          # Frontend dependencies and scripts
+├── backend/                  # Python Analytics Engine, Ingestion & Data
+│   ├── data/                 # Raw and processed datasets
+│   ├── output/               # Exported reports and artifacts
+│   ├── scripts/              # Ingestion, scoring, and reporting modules
+│   ├── tests/                # Unit and integration test suites
+│   ├── requirements.txt      # Python dependencies
+│   └── package.json          # Backend test scripts
+├── .env.example              # Environment variable template
+├── .gitignore                # Git ignore configuration
+├── package.json              # Root project scripts
+├── requirements.txt          # Python dependencies
+└── run_tests.sh              # Unified 3-tier test runner
+```
 
 ## Setup
 
-1. Clone the repository.
+1. Clone the repository:
 	```bash
 	git clone https://github.com/kalviumcommunity/S84_TheNOCSquad_OutageIQ.git
 	cd S84_TheNOCSquad_OutageIQ
 	```
-2. Create a virtual environment.
+2. Set up Python environment:
 	```bash
-	python -m venv venv
+	python3 -m venv venv
+	source venv/bin/activate  # macOS/Linux (or venv\Scripts\activate on Windows)
+	pip install -r backend/requirements.txt
 	```
-3. Activate the virtual environment.
+3. Set up Frontend dependencies:
 	```bash
-	# Windows
-	venv\Scripts\activate
-
-	# macOS/Linux
-	source venv/bin/activate
+	cd frontend
+	npm install
+	cd ..
 	```
-4. Install the project dependencies.
+4. Configure environment:
 	```bash
-	pip install -r requirements.txt
-	```
-5. Confirm the environment is working.
-	```bash
-	python -c "import pandas; print(pandas.__version__)"
+	cp .env.example .env
 	```
 
 ## Run Tests
 
-The test suite documents the expected behavior of the pipeline.
+Execute the unified test suite across all layers:
 
 ```bash
-python -m unittest discover -s tests
+./run_tests.sh
 ```
 
-## Notes
+Or run individual layer suites:
 
-Copy `.env.example` to `.env` before running local analysis, then fill in your own data paths and scoring values. The project expects environment variables for source data locations, processed output locations, and configurable Impact Score weights; no real secrets should be committed.
+```bash
+# Run backend Python tests
+python3 -m unittest discover -s backend/tests
 
-If you are extending the project, keep the PRD and tests aligned with the data pipeline so changes to ingestion, scoring, or reporting stay traceable.
+# Run backend test runner
+npm --prefix backend test
+
+# Run frontend Next.js build & Playwright E2E tests
+npm --prefix frontend test
+```
 
 ## About The NOC Squad
 
 The NOC Squad is the team behind OutageIQ. The project is focused on helping operations teams move from reactive outage triage to impact-based prioritization, so the busiest and most business-critical incidents rise to the top first.
-
-In practice, that means giving the squad one place to review outage signals, complaint pressure, and regional usage data, then turning those inputs into an explainable priority queue and leadership-ready reporting.
-
-The long-term goal is to make outage response faster, clearer, and easier to defend with data.

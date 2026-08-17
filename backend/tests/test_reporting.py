@@ -3,7 +3,7 @@ import sys
 import os
 import pandas as pd
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../analytics-workspace-setup/scripts')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../scripts')))
 
 from reporting import filter_outages, get_executive_summary
 
