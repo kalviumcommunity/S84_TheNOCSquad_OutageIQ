@@ -15,10 +15,14 @@ test.describe('ROI Savings Calculator Component (PRD Sec 10)', () => {
 
   test('should recalculate annual savings when sliders are adjusted', async ({ page }) => {
     const roiSection = page.locator('section').filter({ hasText: /Calculate Your Telecom ROI & Savings/i });
-    const sliders = roiSection.locator('input[type="range"]');
+    const slider = roiSection.locator('input[type="range"]').nth(0);
 
-    await sliders.nth(0).fill('200');
-    await sliders.nth(0).dispatchEvent('input');
+    await slider.evaluate((el: HTMLInputElement) => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set;
+      nativeSetter!.call(el, '200');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
 
     await expect(roiSection.locator('text=360 hrs')).toBeVisible();
   });

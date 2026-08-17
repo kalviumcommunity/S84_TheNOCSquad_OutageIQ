@@ -3,6 +3,6 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "test": "if [ -f ../venv/bin/python3 ]; then ../venv/bin/python3 -m unittest discover -s ../tests; else python3 -m unittest discover -s ../tests; fi"
+    "test": "if [ -f ../venv/bin/python3 ]; then ../venv/bin/python3 -m unittest discover -s tests; else python3 -m unittest discover -s tests; fi"
   }
 }
