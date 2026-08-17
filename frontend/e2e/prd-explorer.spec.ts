@@ -30,6 +30,22 @@ test.describe('PRD Technical Requirements Explorer Component (PRD Sec 6, 8, 9)',
     await expect(prdSection.locator('text=subscriber_count')).toBeVisible();
   });
 
+  test('should inspect data quality and schema health details (FR1, FR2)', async ({ page }) => {
+    const prdSection = page.locator('#prd-spec');
+    const schemasTab = prdSection.getByRole('button', { name: /Data Sources & Schemas/i });
+
+    await schemasTab.click();
+
+    // Verify Data Quality Inspector and Schema Health details
+    await expect(prdSection.locator('text=Data Quality & Intake Diagnostics Inspector')).toBeVisible();
+    await expect(prdSection.locator('text=100.0% Complete').first()).toBeVisible();
+    await expect(prdSection.locator('text=Schema Validated').first()).toBeVisible();
+
+    // Click on Customer Complaint Logs card to toggle inspected schema
+    await prdSection.locator('text=Customer Complaint Logs').click();
+    await expect(prdSection.locator('text=complaints.csv / .json')).toBeVisible();
+  });
+
   test('should switch to Non-Functional Requirements tab (NFRs)', async ({ page }) => {
     const prdSection = page.locator('#prd-spec');
     const nfrTab = prdSection.getByRole('button', { name: /^Non-Functional Requirements/i });

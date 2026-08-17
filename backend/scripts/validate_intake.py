@@ -1,16 +1,23 @@
 import json
 import os
 from datetime import datetime
+from typing import Dict, Any, List, Optional, Tuple
 
 import chardet
 import pandas as pd
 
-
 ALLOWED_FORMATS = ["csv", "json", "xlsx"]
 DEFAULT_OUTPUT_PATH = os.path.join("output", "intake_report.json")
 
+# Core schemas aligned with PRD & Ingestion Engine
+DATASET_SCHEMAS = {
+    "outages": ["outage_id", "region_id", "start_time", "severity", "status"],
+    "complaints": ["complaint_id", "region_id", "timestamp"],
+    "usage": ["region_id", "region_name", "subscriber_count", "revenue_tier"]
+}
 
-def validate_file_exists(filepath):
+
+def validate_file_exists(filepath: str) -> Tuple[bool, str]:
     """Check if file exists and is non-empty."""
     if not os.path.exists(filepath):
         return False, f"File does not exist: {filepath}"
@@ -21,7 +28,7 @@ def validate_file_exists(filepath):
     return True, "File exists and has content"
 
 
-def validate_file_format(filepath, allowed_formats=None):
+def validate_file_format(filepath: str, allowed_formats: Optional[List[str]] = None) -> Tuple[bool, str]:
     """Check if file extension is supported."""
     allowed_formats = allowed_formats or ALLOWED_FORMATS
     extension = filepath.split(".")[-1].lower()
@@ -32,7 +39,7 @@ def validate_file_format(filepath, allowed_formats=None):
     return True, f"Format valid: {extension}"
 
 
-def validate_schema(df, expected_columns):
+def validate_schema(df: pd.DataFrame, expected_columns: List[str]) -> Tuple[bool, str]:
     """Validate that DataFrame has all expected columns."""
     missing = set(expected_columns) - set(df.columns)
     extra = set(df.columns) - set(expected_columns)
@@ -48,18 +55,18 @@ def validate_schema(df, expected_columns):
     return False, " | ".join(issues)
 
 
-def detect_encoding(filepath):
+def detect_encoding(filepath: str) -> Tuple[str, str]:
     """Detect file encoding with confidence."""
     with open(filepath, "rb") as file_handle:
         result = chardet.detect(file_handle.read(10000))
 
-    encoding = result.get("encoding", "utf-8")
-    confidence = result.get("confidence", 0)
+    encoding = result.get("encoding", "utf-8") or "utf-8"
+    confidence = result.get("confidence", 0) or 0.0
     return encoding, f"Detected: {encoding} (confidence: {confidence:.1%})"
 
 
-def capture_dataset_stats(filepath, df):
-    """Log row count and file size."""
+def capture_dataset_stats(filepath: str, df: pd.DataFrame) -> Dict[str, Any]:
+    """Log row count, column count, byte size, and megabyte size."""
     file_size_bytes = os.path.getsize(filepath)
     file_size_mb = file_size_bytes / (1024 * 1024)
 
@@ -68,10 +75,12 @@ def capture_dataset_stats(filepath, df):
         "columns": len(df.columns),
         "file_size_mb": round(file_size_mb, 5),
         "bytes": file_size_bytes,
+        "null_cells": int(df.isnull().sum().sum()),
+        "empty_rows": int(df.isnull().all(axis=1).sum())
     }
 
 
-def _load_dataframe(filepath):
+def _load_dataframe(filepath: str) -> pd.DataFrame:
     extension = filepath.split(".")[-1].lower()
 
     if extension == "csv":
@@ -84,15 +93,18 @@ def _load_dataframe(filepath):
     raise ValueError(f"Unsupported format: {extension}")
 
 
-def _validation_status(message, passed):
+def _validation_status(message: str, passed: bool) -> Dict[str, Any]:
     return {
         "passed": passed,
         "message": message,
     }
 
 
-def generate_intake_report(filepath, expected_columns, output_path=DEFAULT_OUTPUT_PATH):
-    """Generate complete intake validation report."""
+def generate_intake_report(filepath: str, expected_columns: List[str], output_path: str = DEFAULT_OUTPUT_PATH) -> Dict[str, Any]:
+    """
+    FR1, FR2 & NFR Data Quality: Generate complete intake validation report.
+    Captures file metadata, byte size, row/col stats, detected encoding, and schema check.
+    """
     report = {
         "timestamp": datetime.now().isoformat(),
         "filepath": filepath,
@@ -138,8 +150,9 @@ def main():
         "transaction_date",
     ]
 
-    report = generate_intake_report(sample_path, expected_columns)
-    print(json.dumps(report, indent=2, default=str))
+    if os.path.exists(sample_path):
+        report = generate_intake_report(sample_path, expected_columns)
+        print(json.dumps(report, indent=2, default=str))
 
 
 if __name__ == "__main__":

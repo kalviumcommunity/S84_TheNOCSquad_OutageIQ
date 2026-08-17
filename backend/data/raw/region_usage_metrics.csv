@@ -1,0 +1,6 @@
+region_id,region_name,subscriber_count,avg_daily_traffic,revenue_tier,plan_mix,prior_month_ARPU
+REG-METRO,National Metro Core,2500000,185000.5,Tier 1,Enterprise/5G Premium,48.50
+REG-NORTH,North Industrial Zone,1200000,94000.2,Tier 2,Commercial/Broadband,32.20
+REG-SOUTH,South Residential Hub,850000,62000.8,Tier 2,Consumer Postpaid,28.75
+REG-EAST,East Coastal District,420000,28500.0,Tier 3,Prepaid Standard,19.40
+REG-WEST,West Highland Province,310000,19200.4,Tier 3,Prepaid Rural,15.80

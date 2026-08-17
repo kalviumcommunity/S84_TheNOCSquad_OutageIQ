@@ -1,0 +1,9 @@
+complaint_id,customer_id,region_id,timestamp,channel,category,linked_outage_id,sentiment,priority
+CMP-1001,CUST-9012,REG-METRO,2026-07-29 08:35:00,Call Center,Total Blackout,OUT-101,Negative,Urgent
+CMP-1002,CUST-3819,REG-METRO,2026-07-29 08:42:00,Mobile App,No 5G Signal,OUT-101,Negative,High
+CMP-1003,CUST-4411,REG-METRO,2026-07-29 08:50:00,Web Portal,Fiber Down,OUT-101,Neutral,High
+CMP-1004,CUST-7721,REG-NORTH,2026-07-29 09:20:00,Call Center,Voice Dropping,OUT-102,Negative,High
+CMP-1005,CUST-1928,REG-NORTH,2026-07-29 09:30:00,Social Media,Cannot Connect,OUT-102,Negative,Medium
+CMP-1006,CUST-5512,REG-SOUTH,2026-07-29 08:00:00,Mobile App,Slow Speed,OUT-103,Neutral,Low
+CMP-1007,CUST-8812,REG-METRO,2026-07-29 08:55:00,Social Media,Outage in Downtown,,Negative,High
+CMP-1008,CUST-2931,REG-NORTH,2026-07-29 09:40:00,Web Portal,No Signal in North Sector,,Negative,Medium

@@ -10,6 +10,8 @@ Thumbs.db
 node_modules/
 backend/node_modules/
 frontend/node_modules/
+frontend/test-results/
+backend/output/
+output/
 dist/
 *.log
-
