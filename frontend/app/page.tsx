@@ -5,6 +5,7 @@ import Hero from "@/components/Hero";
 import ImpactCalculator from "@/components/ImpactCalculator";
 import ProblemSolution from "@/components/ProblemSolution";
 import PersonasSection from "@/components/PersonasSection";
+import RegionalImpactOverview from "@/components/RegionalImpactOverview";
 import LiveQueuePreview from "@/components/LiveQueuePreview";
 import MethodologySection from "@/components/MethodologySection";
 import PrdRequirementsExplorer from "@/components/PrdRequirementsExplorer";
@@ -30,6 +31,9 @@ export default function Home() {
 
         {/* Persona Experiences (PRD Sec 4) */}
         <PersonasSection />
+
+        {/* Regional Impact Heatmap & Geo-Operational Analytics (PRD Sec 8.3 & FR11) */}
+        <RegionalImpactOverview />
 
         {/* Interactive Triage Queue Dashboard Preview (PRD Sec 8.3 & FR9-FR10) */}
         <LiveQueuePreview />
