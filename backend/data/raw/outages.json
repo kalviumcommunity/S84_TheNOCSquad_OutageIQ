@@ -1,0 +1,24 @@
+[
+  {
+    "outage_id": "OUT-101",
+    "region_id": "REG-METRO",
+    "tower_id": "TWR-M-01",
+    "start_time": "2026-07-29 08:30:00",
+    "end_time": null,
+    "severity": "CRITICAL",
+    "status": "open",
+    "affected_services": "5G/Fiber/VoLTE",
+    "root_cause_code": "FIBER_CUT_CORE"
+  },
+  {
+    "outage_id": "OUT-102",
+    "region_id": "REG-NORTH",
+    "tower_id": "TWR-N-14",
+    "start_time": "2026-07-29 09:15:00",
+    "end_time": null,
+    "severity": "HIGH",
+    "status": "open",
+    "affected_services": "VoLTE/Broadband",
+    "root_cause_code": "POWER_GRID_FAILURE"
+  }
+]
