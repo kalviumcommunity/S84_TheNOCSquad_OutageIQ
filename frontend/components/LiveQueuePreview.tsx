@@ -171,6 +171,18 @@ export default function LiveQueuePreview() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Listen for custom region filter events from RegionalImpactOverview (Phase 8 / FR11)
+  useEffect(() => {
+    const handleRegionFilter = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSelectedRegion(customEvent.detail);
+      }
+    };
+    window.addEventListener("filter-region", handleRegionFilter);
+    return () => window.removeEventListener("filter-region", handleRegionFilter);
+  }, []);
+
   // Sorting state (Phase 5 / FR6, FR8)
   const [sortColumn, setSortColumn] = useState<"score" | "subscribers" | "complaints">("score");
   const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timezone
 from typing import Optional, List, Union, Dict, Any
+from geo_analytics import compute_regional_aggregations, get_regional_ranking
 
 # Standard SLA response and resolution targets in hours (FR13 / PRD Section 8)
 SLA_TARGET_HOURS: Dict[str, float] = {
