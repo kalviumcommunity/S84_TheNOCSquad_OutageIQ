@@ -39,7 +39,8 @@ This workflow is implemented and tested around the following behavior:
 .
 ├── docs/                     # Specifications and engineering roadmaps
 │   ├── PRD.md                # Product Requirements Document
-│   └── PLANNER.md            # 10-Phase Implementation & Test Planner
+│   ├── PLANNER.md            # 10-Phase Implementation & Test Planner
+│   └── SETUP.md              # Local Setup and Execution Guide
 ├── frontend/                 # Next.js 16 Web Application & UI Tests
 │   ├── app/                  # App Router pages and layout
 │   ├── components/           # UI components (Queue, Simulator, ROI, etc.)
@@ -60,6 +61,8 @@ This workflow is implemented and tested around the following behavior:
 ```
 
 ## Setup
+
+For an in-depth step-by-step setup and local execution guide, see [`docs/SETUP.md`](docs/SETUP.md). Quick setup summary:
 
 1. Clone the repository:
 	```bash
