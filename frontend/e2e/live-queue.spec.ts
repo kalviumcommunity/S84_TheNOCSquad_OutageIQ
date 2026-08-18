@@ -17,6 +17,36 @@ test.describe('Live Prioritized Outage Queue Component (PRD Sec 8.3 & FR8-FR16)'
     await expect(queueSection.locator('text=OUT-8901')).toBeVisible();
   });
 
+  test('should display top-ranked incident in slot #1 with rank badge #1', async ({ page }) => {
+    const queueSection = page.locator('#queue-preview');
+    const firstRow = queueSection.locator('tbody tr').first();
+    await expect(firstRow).toBeVisible();
+    await expect(firstRow.locator('text=#1')).toBeVisible();
+    await expect(firstRow.locator('text=OUT-8902')).toBeVisible();
+  });
+
+  test('should sort triage queue when column headers are clicked', async ({ page }) => {
+    const queueSection = page.locator('#queue-preview');
+    await queueSection.scrollIntoViewIfNeeded();
+
+    // Default order has OUT-8902 as #1
+    const firstRowBefore = queueSection.locator('tbody tr').first();
+    await expect(firstRowBefore.locator('text=OUT-8902')).toBeVisible();
+
+    // Click on Impact Score header to toggle to ascending order (lowest score first)
+    const scoreHeader = queueSection.locator('th', { hasText: 'Impact Score' });
+    await scoreHeader.click();
+
+    // Now lowest score outage (OUT-8890 with 21.4) should be first
+    const firstRowAfterAsc = queueSection.locator('tbody tr').first();
+    await expect(firstRowAfterAsc.locator('text=OUT-8890')).toBeVisible();
+
+    // Click again to toggle back to descending order
+    await scoreHeader.click();
+    const firstRowAfterDesc = queueSection.locator('tbody tr').first();
+    await expect(firstRowAfterDesc.locator('text=OUT-8902')).toBeVisible();
+  });
+
   test('should filter outages by region', async ({ page }) => {
     const queueSection = page.locator('#queue-preview');
     const regionSelect = queueSection.locator('select').first();
