@@ -411,6 +411,22 @@ export default function LiveQueuePreview() {
                     <div className="bg-rose-500 h-full" style={{ width: `${activeModalOutage.subscores.duration}%` }} />
                   </div>
                 </div>
+
+                {/* Phase 2 Complaint Linkage Correlation (FR4) */}
+                <div className="p-3 rounded-xl bg-gray-950/80 border border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400">⚡</span>
+                    <span className="text-gray-300">Complaint Fusion (FR4):</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                      78% Explicit Tags
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
+                      22% Temporal Matched (±2h)
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Close Button */}

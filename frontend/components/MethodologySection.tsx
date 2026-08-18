@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 export default function MethodologySection() {
+  const [timeWindow, setTimeWindow] = useState<number>(2.0);
+
   const steps = [
     {
       num: "01",
@@ -44,6 +46,25 @@ export default function MethodologySection() {
       desc: "Instantly surfaces prioritized queue for NOC engineers, threshold alert banners, regional heatmaps, and executive summary reports.",
       detail: "<5s recompute speed • PDF/CSV export • In-app alert banners"
     }
+  ];
+
+  // Dynamic simulation for temporal window adjustments (FR4, Phase 2)
+  const totalComplaints = 500;
+  const explicitCount = 340; // 68%
+  // Increasing window links more unlinked complaints
+  const temporalMatchCount = Math.min(145, Math.round(75 + timeWindow * 25));
+  const unlinkedCount = Math.max(0, totalComplaints - explicitCount - temporalMatchCount);
+
+  const matchedTotal = explicitCount + temporalMatchCount;
+  const matchRatioPct = ((matchedTotal / totalComplaints) * 100).toFixed(1);
+  const unlinkedRatioPct = ((unlinkedCount / totalComplaints) * 100).toFixed(1);
+
+  const sampleComplaintStream = [
+    { id: "CMP-901", region: "REG-METRO", time: "08:35 AM", channel: "Call Center", matchType: "explicit", linkedOutage: "OUT-101" },
+    { id: "CMP-902", region: "REG-METRO", time: "08:42 AM", channel: "Mobile App", matchType: "explicit", linkedOutage: "OUT-101" },
+    { id: "CMP-903", region: "REG-METRO", time: "09:10 AM", channel: "Social Media", matchType: timeWindow >= 1.0 ? "temporal_match" : "unlinked", linkedOutage: timeWindow >= 1.0 ? "OUT-101" : "None" },
+    { id: "CMP-904", region: "REG-NORTH", time: "09:20 AM", channel: "Web Portal", matchType: "explicit", linkedOutage: "OUT-102" },
+    { id: "CMP-905", region: "REG-NORTH", time: "11:05 AM", channel: "Call Center", matchType: timeWindow >= 2.0 ? "temporal_match" : "unlinked", linkedOutage: timeWindow >= 2.0 ? "OUT-102" : "None" }
   ];
 
   return (
@@ -89,6 +110,193 @@ export default function MethodologySection() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Phase 2: Interactive Pipeline & Temporal Complaint Associator Panel */}
+        <div id="pipeline-stage-view" className="mt-16 bg-gray-900/90 border border-purple-500/30 rounded-2xl p-6 sm:p-8 space-y-8 shadow-2xl">
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-mono font-semibold">
+                PHASE 2 DATA ENGINEERING
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white mt-2">
+                Pipeline Stages & Spatial-Temporal Complaint Associator
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                Visualizing data flow from raw streams to deduplication, temporal record linkage, and unified multi-table merge.
+              </p>
+            </div>
+
+            {/* Time Window Slider */}
+            <div className="bg-gray-950/80 border border-gray-800 p-4 rounded-xl min-w-[260px] space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-400 font-semibold">Sliding Matching Window:</span>
+                <span className="font-mono font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+                  ±{timeWindow.toFixed(1)} Hours
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="6.0"
+                step="0.5"
+                value={timeWindow}
+                onChange={(e) => setTimeWindow(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              />
+              <div className="flex justify-between text-[10px] font-mono text-gray-500">
+                <span>±0.5h</span>
+                <span>Default ±2.0h</span>
+                <span>±6.0h</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Pipeline Stages Cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gray-950/80 border border-gray-800 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                  STAGE 1
+                </span>
+                <span className="text-[10px] font-mono text-gray-500">Raw Ingestion</span>
+              </div>
+              <div className="text-lg font-bold text-white font-mono">520 Records</div>
+              <p className="text-[11px] text-gray-400">Raw alert logs, customer complaint events, and regional usage snapshots.</p>
+            </div>
+
+            <div className="bg-gray-950/80 border border-gray-800 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  STAGE 2
+                </span>
+                <span className="text-[10px] font-mono text-gray-500">Deduplication</span>
+              </div>
+              <div className="text-lg font-bold text-white font-mono">500 Valid Records</div>
+              <p className="text-[11px] text-gray-400">Whitespace stripped, ID standardized, and duplicate primary keys pruned.</p>
+            </div>
+
+            <div className="bg-gray-950/80 border border-purple-500/40 rounded-xl p-4 space-y-2 bg-purple-950/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30">
+                  STAGE 3
+                </span>
+                <span className="text-[10px] font-mono text-purple-300">Spatial-Temporal Link</span>
+              </div>
+              <div className="text-lg font-bold text-purple-300 font-mono">{matchedTotal} Linked ({matchRatioPct}%)</div>
+              <p className="text-[11px] text-gray-400">Explicit tags combined with ±{timeWindow.toFixed(1)}h sliding window matches.</p>
+            </div>
+
+            <div className="bg-gray-950/80 border border-emerald-500/40 rounded-xl p-4 space-y-2 bg-emerald-950/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                  STAGE 4
+                </span>
+                <span className="text-[10px] font-mono text-emerald-300">Unified Merged Model</span>
+              </div>
+              <div className="text-lg font-bold text-emerald-300 font-mono">100% Joined</div>
+              <p className="text-[11px] text-gray-400">Zero Cartesian explosion; full subscriber counts & complaint volumes attached.</p>
+            </div>
+          </div>
+
+          {/* Linkage Breakdown Metrics & Sample Stream */}
+          <div className="grid lg:grid-cols-12 gap-6 items-start">
+            
+            {/* Left: Summary Metrics */}
+            <div className="lg:col-span-5 bg-gray-950/90 border border-gray-800 rounded-xl p-5 space-y-4">
+              <div className="text-xs font-mono font-bold text-gray-300 uppercase tracking-wider">
+                Complaint Linkage Distribution
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs font-mono mb-1">
+                    <span className="text-gray-300">Explicit Outage Tags:</span>
+                    <span className="text-emerald-400 font-bold">{explicitCount} ({((explicitCount / totalComplaints) * 100).toFixed(1)}%)</span>
+                  </div>
+                  <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                    <div className="bg-emerald-500 h-full" style={{ width: `${(explicitCount / totalComplaints) * 100}%` }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-mono mb-1">
+                    <span className="text-gray-300">Temporally Correlated Matches (±{timeWindow}h):</span>
+                    <span className="text-purple-400 font-bold">{temporalMatchCount} ({((temporalMatchCount / totalComplaints) * 100).toFixed(1)}%)</span>
+                  </div>
+                  <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                    <div className="bg-purple-500 h-full" style={{ width: `${(temporalMatchCount / totalComplaints) * 100}%` }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-mono mb-1">
+                    <span className="text-gray-300">Unlinked / Isolated Complaints:</span>
+                    <span className="text-rose-400 font-bold">{unlinkedCount} ({unlinkedRatioPct}%)</span>
+                  </div>
+                  <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                    <div className="bg-rose-500 h-full" style={{ width: `${(unlinkedCount / totalComplaints) * 100}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400 font-mono">
+                * Ensures customer complaints are accurately attributed to open outages for impact calculation (PRD Section 6).
+              </div>
+            </div>
+
+            {/* Right: Sample Stream Table */}
+            <div className="lg:col-span-7 bg-gray-950/90 border border-gray-800 rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-mono font-bold text-gray-300 uppercase tracking-wider">
+                  Live Complaint Stream Linkage Tags
+                </div>
+                <span className="text-[10px] font-mono text-purple-400">Dynamic Matching Active</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="border-b border-gray-800 text-gray-500 text-[10px] uppercase">
+                    <tr>
+                      <th className="pb-2">Complaint ID</th>
+                      <th className="pb-2">Region</th>
+                      <th className="pb-2">Time</th>
+                      <th className="pb-2">Linkage Type</th>
+                      <th className="pb-2">Assigned Outage</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800/60">
+                    {sampleComplaintStream.map((item, i) => (
+                      <tr key={i} className="hover:bg-gray-900/50">
+                        <td className="py-2.5 text-white font-bold">{item.id}</td>
+                        <td className="py-2.5 text-gray-400">{item.region}</td>
+                        <td className="py-2.5 text-gray-400">{item.time}</td>
+                        <td className="py-2.5">
+                          {item.matchType === "explicit" ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                              Explicit Tag
+                            </span>
+                          ) : item.matchType === "temporal_match" ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold">
+                              Temporal Match
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold">
+                              Unlinked
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 text-blue-400 font-bold">{item.linkedOutage}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
         </div>
 
         {/* Formula Banner */}
