@@ -73,6 +73,31 @@ test.describe('Live Prioritized Outage Queue Component (PRD Sec 8.3 & FR8-FR16)'
     await expect(queueSection.locator('text=OUT-8902')).toBeVisible();
   });
 
+  test('should filter outages by search query and reset filters (Phase 6 / FR13)', async ({ page }) => {
+    const queueSection = page.locator('#queue-preview');
+    const searchInput = queueSection.locator('input[type="text"]');
+
+    await searchInput.fill('DEL-991');
+
+    await expect(queueSection.locator('text=OUT-8902')).toBeVisible();
+    await expect(queueSection.locator('text=OUT-8904')).not.toBeVisible();
+
+    const resetBtn = queueSection.getByRole('button', { name: /Reset Filters/i });
+    await expect(resetBtn).toBeVisible();
+    await resetBtn.click();
+
+    await expect(queueSection.locator('text=OUT-8904')).toBeVisible();
+  });
+
+  test('should display SLA countdown timers in triage table (Phase 6 / FR13)', async ({ page }) => {
+    const queueSection = page.locator('#queue-preview');
+    await queueSection.scrollIntoViewIfNeeded();
+
+    await expect(queueSection.locator('text=SLA Countdown')).toBeVisible();
+    await expect(queueSection.locator('text=Breached by').first()).toBeVisible();
+    await expect(queueSection.locator('text=remaining').first()).toBeVisible();
+  });
+
   test('should support Executive View toggle (FR15)', async ({ page }) => {
     const queueSection = page.locator('#queue-preview');
     const execToggle = queueSection.locator('button').filter({ has: page.locator('span.rounded-full') });
@@ -106,6 +131,7 @@ test.describe('Live Prioritized Outage Queue Component (PRD Sec 8.3 & FR8-FR16)'
     await expect(modal.locator('text=Complaint Pressure (30% Wt):')).toBeVisible();
     await expect(modal.locator('text=Revenue Exposure (20% Wt):')).toBeVisible();
     await expect(modal.locator('text=Duration & Severity (15% Wt):')).toBeVisible();
+    await expect(modal.locator('text=SLA Target & Resolution Status (FR13):')).toBeVisible();
 
     const closeBtn = modal.getByRole('button', { name: /Done Inspecting/i });
     await closeBtn.click();
