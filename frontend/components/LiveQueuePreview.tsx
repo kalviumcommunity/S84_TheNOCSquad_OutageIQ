@@ -137,21 +137,18 @@ export default function LiveQueuePreview() {
   const [execView, setExecView] = useState<boolean>(false);
   const [activeModalOutage, setActiveModalOutage] = useState<Outage | null>(null);
 
-  // Weight configuration multipliers
-  const getPresetMultiplier = (preset: string) => {
-    switch (preset) {
-      case "CUSTOMER_CENTRIC":
-        return { reach: 1.14, complaints: 1.33, revenue: 0.5, duration: 0.67 };
-      case "REVENUE_FOCUSED":
-        return { reach: 0.57, complaints: 0.5, revenue: 2.5, duration: 1.0 };
-      case "SEVERITY_ESCALATED":
-        return { reach: 0.71, complaints: 0.83, revenue: 0.75, duration: 2.33 };
-      default:
-        return { reach: 1.0, complaints: 1.0, revenue: 1.0, duration: 1.0 };
+  // Sorting state (Phase 5 / FR6, FR8)
+  const [sortColumn, setSortColumn] = useState<"score" | "subscribers" | "complaints">("score");
+  const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
+
+  const handleSort = (column: "score" | "subscribers" | "complaints") => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "desc" ? "asc" : "desc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("desc");
     }
   };
-
-  const mult = getPresetMultiplier(weightPreset);
 
   // Filter outages
   const filteredOutages = mockOutages.filter((outage) => {
@@ -160,7 +157,20 @@ export default function LiveQueuePreview() {
     return regionMatch && priorityMatch;
   });
 
-  const displayOutages = execView ? filteredOutages.slice(0, 5) : filteredOutages;
+  // Sort outages (Phase 5)
+  const sortedOutages = [...filteredOutages].sort((a, b) => {
+    let comparison = 0;
+    if (sortColumn === "score") {
+      comparison = b.score - a.score;
+    } else if (sortColumn === "subscribers") {
+      comparison = b.subscribers - a.subscribers;
+    } else if (sortColumn === "complaints") {
+      comparison = b.complaintVelocity - a.complaintVelocity;
+    }
+    return sortDirection === "desc" ? comparison : -comparison;
+  });
+
+  const displayOutages = execView ? sortedOutages.slice(0, 5) : sortedOutages;
 
   return (
     <section id="queue-preview" className="py-20 bg-gray-950 border-t border-gray-800/80">
@@ -282,9 +292,23 @@ export default function LiveQueuePreview() {
             <thead className="bg-gray-950/80 border-b border-gray-800 text-gray-400 font-mono text-[11px] uppercase tracking-wider">
               <tr>
                 <th className="py-3.5 px-4 font-semibold">Rank & Outage ID</th>
-                <th className="py-3.5 px-4 font-semibold">Impact Score</th>
+                <th
+                  onClick={() => handleSort("score")}
+                  className="py-3.5 px-4 font-semibold cursor-pointer hover:text-white transition-colors select-none"
+                >
+                  <span className="flex items-center gap-1">
+                    Impact Score {sortColumn === "score" ? (sortDirection === "desc" ? "▼" : "▲") : "↕"}
+                  </span>
+                </th>
                 <th className="py-3.5 px-4 font-semibold">Region & Tower</th>
-                <th className="py-3.5 px-4 font-semibold">Reach / Complaints</th>
+                <th
+                  onClick={() => handleSort("subscribers")}
+                  className="py-3.5 px-4 font-semibold cursor-pointer hover:text-white transition-colors select-none"
+                >
+                  <span className="flex items-center gap-1">
+                    Reach / Complaints {sortColumn === "subscribers" ? (sortDirection === "desc" ? "▼" : "▲") : "↕"}
+                  </span>
+                </th>
                 <th className="py-3.5 px-4 font-semibold">Revenue Exposure</th>
                 <th className="py-3.5 px-4 font-semibold">Telemetry Confidence</th>
                 <th className="py-3.5 px-4 font-semibold">Status / Action</th>
@@ -295,12 +319,16 @@ export default function LiveQueuePreview() {
                 <tr
                   key={outage.id}
                   onClick={() => setActiveModalOutage(outage)}
-                  className="hover:bg-gray-800/50 transition-colors cursor-pointer group"
+                  className={`hover:bg-gray-800/50 transition-colors cursor-pointer group ${
+                    idx === 0 ? "bg-rose-950/10 border-l-2 border-l-rose-500" : ""
+                  }`}
                 >
                   {/* Rank & ID */}
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-gray-800 text-gray-300 font-mono text-xs flex items-center justify-center font-bold">
+                      <span className={`w-6 h-6 rounded-full font-mono text-xs flex items-center justify-center font-bold ${
+                        idx === 0 ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : "bg-gray-800 text-gray-300"
+                      }`}>
                         #{idx + 1}
                       </span>
                       <div>
