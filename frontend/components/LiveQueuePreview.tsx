@@ -16,6 +16,9 @@ interface Outage {
   status: "Active Triage" | "Resolving" | "Investigating";
   confidenceFlag: boolean;
   confidenceReason: string;
+  slaTargetHours: number;
+  slaStatus: "BREACHED" | "AT_RISK" | "ON_TRACK";
+  slaRemainingText: string;
   subscores: {
     reach: number;
     complaints: number;
@@ -40,6 +43,9 @@ const mockOutages: Outage[] = [
     status: "Active Triage",
     confidenceFlag: true,
     confidenceReason: "Complete Telemetry (100% Signal Integrity)",
+    slaTargetHours: 2.0,
+    slaStatus: "BREACHED",
+    slaRemainingText: "🚨 Breached by 1h 45m",
     subscores: { reach: 95, complaints: 92, revenue: 98, duration: 88 },
     rootCause: "Major Backhaul Fiber Cut near Core Data Center"
   },
@@ -57,6 +63,9 @@ const mockOutages: Outage[] = [
     status: "Investigating",
     confidenceFlag: true,
     confidenceReason: "Complete Telemetry (100% Signal Integrity)",
+    slaTargetHours: 2.0,
+    slaStatus: "BREACHED",
+    slaRemainingText: "🚨 Breached by 10m",
     subscores: { reach: 88, complaints: 90, revenue: 92, duration: 75 },
     rootCause: "Power Grid Substation Surge & Battery Bank Fail"
   },
@@ -69,11 +78,14 @@ const mockOutages: Outage[] = [
     subscribers: 28000,
     complaintVelocity: 210,
     revenueExposure: "$28,000 / hr",
-    openDuration: "5h 15m",
+    openDuration: "1h 45m",
     severityCode: "P2",
     status: "Active Triage",
     confidenceFlag: true,
     confidenceReason: "Complete Telemetry (100% Signal Integrity)",
+    slaTargetHours: 2.0,
+    slaStatus: "AT_RISK",
+    slaRemainingText: "⚠️ 15m remaining",
     subscores: { reach: 72, complaints: 70, revenue: 80, duration: 92 },
     rootCause: "Radio Frequency Degradation & Microwave Link Alignment"
   },
@@ -91,6 +103,9 @@ const mockOutages: Outage[] = [
     status: "Resolving",
     confidenceFlag: true,
     confidenceReason: "Complete Telemetry (100% Signal Integrity)",
+    slaTargetHours: 4.0,
+    slaStatus: "ON_TRACK",
+    slaRemainingText: "⏱️ 2h 30m remaining",
     subscores: { reach: 60, complaints: 65, revenue: 68, duration: 62 },
     rootCause: "Card Hardware Memory Leak on Edge Router"
   },
@@ -108,6 +123,9 @@ const mockOutages: Outage[] = [
     status: "Active Triage",
     confidenceFlag: false,
     confidenceReason: "Partial Data: Missing subscriber usage snapshot (NFR Reliability)",
+    slaTargetHours: 8.0,
+    slaStatus: "ON_TRACK",
+    slaRemainingText: "⏱️ 4h 00m remaining",
     subscores: { reach: 40, complaints: 38, revenue: 45, duration: 52 },
     rootCause: "Scheduled Firmware Update Delay on Secondary Switch"
   },
@@ -125,6 +143,9 @@ const mockOutages: Outage[] = [
     status: "Resolving",
     confidenceFlag: true,
     confidenceReason: "Complete Telemetry (100% Signal Integrity)",
+    slaTargetHours: 24.0,
+    slaStatus: "ON_TRACK",
+    slaRemainingText: "⏱️ 23h 15m remaining",
     subscores: { reach: 18, complaints: 15, revenue: 22, duration: 32 },
     rootCause: "Minor Feeder Cable Weather Degradation"
   }
@@ -133,6 +154,8 @@ const mockOutages: Outage[] = [
 export default function LiveQueuePreview() {
   const [selectedRegion, setSelectedRegion] = useState<string>("ALL");
   const [selectedPriority, setSelectedPriority] = useState<string>("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [weightPreset, setWeightPreset] = useState<string>("BALANCED");
   const [execView, setExecView] = useState<boolean>(false);
   const [activeModalOutage, setActiveModalOutage] = useState<Outage | null>(null);
@@ -150,11 +173,28 @@ export default function LiveQueuePreview() {
     }
   };
 
-  // Filter outages
+  const hasActiveFilters = selectedRegion !== "ALL" || selectedPriority !== "ALL" || selectedStatus !== "ALL" || searchQuery !== "";
+
+  const resetFilters = () => {
+    setSelectedRegion("ALL");
+    setSelectedPriority("ALL");
+    setSelectedStatus("ALL");
+    setSearchQuery("");
+  };
+
+  // Filter outages (Phase 6 / FR13)
   const filteredOutages = mockOutages.filter((outage) => {
     const regionMatch = selectedRegion === "ALL" || outage.region === selectedRegion;
     const priorityMatch = selectedPriority === "ALL" || outage.priority === selectedPriority;
-    return regionMatch && priorityMatch;
+    const statusMatch = selectedStatus === "ALL" || outage.status === selectedStatus;
+    const query = searchQuery.trim().toLowerCase();
+    const searchMatch = query === "" || 
+      outage.id.toLowerCase().includes(query) ||
+      outage.node.toLowerCase().includes(query) ||
+      outage.region.toLowerCase().includes(query) ||
+      outage.rootCause.toLowerCase().includes(query);
+
+    return regionMatch && priorityMatch && statusMatch && searchMatch;
   });
 
   // Sort outages (Phase 5)
@@ -227,63 +267,106 @@ export default function LiveQueuePreview() {
           </div>
         )}
 
-        {/* Filters & Config Bar */}
-        <div className="bg-gray-900/90 border border-gray-800 rounded-t-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            
-            {/* Region Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 font-semibold">Region:</span>
-              <select
-                value={selectedRegion}
-                onChange={(e) => setSelectedRegion(e.target.value)}
-                className="bg-gray-950 border border-gray-800 text-xs text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
-              >
-                <option value="ALL">All Regions (5)</option>
-                <option value="North Region">North Region</option>
-                <option value="South Region">South Region</option>
-                <option value="East Region">East Region</option>
-                <option value="West Region">West Region</option>
-                <option value="Central Region">Central Region</option>
-              </select>
+        {/* Search & Multi-Dimensional Filter Toolbar (Phase 6 / FR13) */}
+        <div className="bg-gray-900/90 border border-gray-800 rounded-t-2xl p-4 space-y-3">
+          
+          {/* Top Row: Search & Reset */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                placeholder="Search by Outage ID, Node, or Root Cause..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-gray-950 border border-gray-800 text-xs text-white rounded-lg px-3 py-2 pl-8 focus:outline-none focus:border-blue-500 placeholder-gray-500 font-mono"
+              />
+              <span className="absolute left-2.5 top-2 text-xs text-gray-500">🔍</span>
             </div>
 
-            {/* Priority Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 font-semibold">Priority:</span>
-              <select
-                value={selectedPriority}
-                onChange={(e) => setSelectedPriority(e.target.value)}
-                className="bg-gray-950 border border-gray-800 text-xs text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+            {hasActiveFilters && (
+              <button
+                onClick={resetFilters}
+                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono font-semibold transition-colors flex items-center gap-1.5 self-start sm:self-auto"
               >
-                <option value="ALL">All Tiers</option>
-                <option value="CRITICAL">Critical Tier (≥75)</option>
-                <option value="HIGH">High Tier (50–74)</option>
-                <option value="MEDIUM">Medium Tier (25–49)</option>
-                <option value="LOW">Low Tier (&lt;25)</option>
-              </select>
-            </div>
-
-            {/* Scoring Weight Preset (FR7 / NFR Extensibility) */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 font-semibold">Scoring Weights:</span>
-              <select
-                value={weightPreset}
-                onChange={(e) => setWeightPreset(e.target.value)}
-                className="bg-gray-950 border border-purple-500/30 text-xs text-purple-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 font-mono"
-              >
-                <option value="BALANCED">Balanced (35/30/20/15)</option>
-                <option value="CUSTOMER_CENTRIC">Customer-Centric (40/40/10/10)</option>
-                <option value="REVENUE_FOCUSED">Revenue-Focused (20/15/50/15)</option>
-                <option value="SEVERITY_ESCALATED">Severity-Escalated (25/25/15/35)</option>
-              </select>
-            </div>
-
+                <span>✕</span> Reset Filters
+              </button>
+            )}
           </div>
 
-          <div className="text-xs text-gray-400 font-mono">
-            Showing <strong>{displayOutages.length}</strong> of {mockOutages.length} outages • Ranked by Impact Score
+          {/* Bottom Row: Select Filters */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-800/60">
+            <div className="flex flex-wrap items-center gap-3">
+              
+              {/* Region Filter (1st select) */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-semibold">Region:</span>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="bg-gray-950 border border-gray-800 text-xs text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                >
+                  <option value="ALL">All Regions (5)</option>
+                  <option value="North Region">North Region</option>
+                  <option value="South Region">South Region</option>
+                  <option value="East Region">East Region</option>
+                  <option value="West Region">West Region</option>
+                  <option value="Central Region">Central Region</option>
+                </select>
+              </div>
+
+              {/* Priority Filter (2nd select) */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-semibold">Priority:</span>
+                <select
+                  value={selectedPriority}
+                  onChange={(e) => setSelectedPriority(e.target.value)}
+                  className="bg-gray-950 border border-gray-800 text-xs text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                >
+                  <option value="ALL">All Tiers</option>
+                  <option value="CRITICAL">Critical Tier (≥75)</option>
+                  <option value="HIGH">High Tier (50–74)</option>
+                  <option value="MEDIUM">Medium Tier (25–49)</option>
+                  <option value="LOW">Low Tier (&lt;25)</option>
+                </select>
+              </div>
+
+              {/* Status Filter (3rd select) */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-semibold">Status:</span>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="bg-gray-950 border border-gray-800 text-xs text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 font-mono"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="Active Triage">Active Triage</option>
+                  <option value="Investigating">Investigating</option>
+                  <option value="Resolving">Resolving</option>
+                </select>
+              </div>
+
+              {/* Scoring Weight Preset (4th select) */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 font-semibold">Scoring Weights:</span>
+                <select
+                  value={weightPreset}
+                  onChange={(e) => setWeightPreset(e.target.value)}
+                  className="bg-gray-950 border border-purple-500/30 text-xs text-purple-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 font-mono"
+                >
+                  <option value="BALANCED">Balanced (35/30/20/15)</option>
+                  <option value="CUSTOMER_CENTRIC">Customer-Centric (40/40/10/10)</option>
+                  <option value="REVENUE_FOCUSED">Revenue-Focused (20/15/50/15)</option>
+                  <option value="SEVERITY_ESCALATED">Severity-Escalated (25/25/15/35)</option>
+                </select>
+              </div>
+
+            </div>
+
+            <div className="text-xs text-gray-400 font-mono">
+              Showing <strong>{displayOutages.length}</strong> of {mockOutages.length} outages • Ranked by Impact Score
+            </div>
           </div>
+
         </div>
 
         {/* Outage Table */}
@@ -310,6 +393,7 @@ export default function LiveQueuePreview() {
                   </span>
                 </th>
                 <th className="py-3.5 px-4 font-semibold">Revenue Exposure</th>
+                <th className="py-3.5 px-4 font-semibold">SLA Countdown</th>
                 <th className="py-3.5 px-4 font-semibold">Telemetry Confidence</th>
                 <th className="py-3.5 px-4 font-semibold">Status / Action</th>
               </tr>
@@ -378,6 +462,19 @@ export default function LiveQueuePreview() {
                   <td className="py-4 px-4">
                     <div className="font-mono text-emerald-400 font-semibold">{outage.revenueExposure}</div>
                     <div className="text-[11px] font-mono text-gray-400">Open {outage.openDuration}</div>
+                  </td>
+
+                  {/* SLA Countdown (Phase 6 / FR13) */}
+                  <td className="py-4 px-4">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${
+                      outage.slaStatus === "BREACHED"
+                        ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                        : outage.slaStatus === "AT_RISK"
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                        : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    }`}>
+                      {outage.slaRemainingText}
+                    </span>
                   </td>
 
                   {/* Telemetry Confidence (Phase 4 / NFR Reliability) */}
@@ -452,6 +549,20 @@ export default function LiveQueuePreview() {
                   <div className="text-xs text-gray-400 font-mono">Root Cause Identified</div>
                   <div className="text-xs font-semibold text-gray-200">{activeModalOutage.rootCause}</div>
                 </div>
+              </div>
+
+              {/* SLA Target & Resolution Tracking */}
+              <div className="p-3 rounded-xl bg-gray-950/80 border border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                <span className="text-gray-400 font-semibold">SLA Target & Resolution Status (FR13):</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                  activeModalOutage.slaStatus === "BREACHED"
+                    ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                    : activeModalOutage.slaStatus === "AT_RISK"
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                }`}>
+                  {activeModalOutage.slaRemainingText} (Target: {activeModalOutage.slaTargetHours}h)
+                </span>
               </div>
 
               {/* Data Completeness & Telemetry Reliability (Phase 4 / NFR Reliability) */}
