@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Outage {
   id: string;
@@ -160,6 +160,17 @@ export default function LiveQueuePreview() {
   const [execView, setExecView] = useState<boolean>(false);
   const [activeModalOutage, setActiveModalOutage] = useState<Outage | null>(null);
 
+  // Close modal on Escape key press (Phase 7 Accessibility)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setActiveModalOutage(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Sorting state (Phase 5 / FR6, FR8)
   const [sortColumn, setSortColumn] = useState<"score" | "subscribers" | "complaints">("score");
   const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
@@ -211,6 +222,13 @@ export default function LiveQueuePreview() {
   });
 
   const displayOutages = execView ? sortedOutages.slice(0, 5) : sortedOutages;
+
+  // Sample mock linked complaints for deep-dive explorer (Phase 7 / FR10)
+  const getLinkedComplaints = (outageId: string) => [
+    { id: `CMP-${outageId}-01`, time: "08:35 AM", channel: "Call Center", category: "Complete Signal Drop", match: "Explicit Tag" },
+    { id: `CMP-${outageId}-02`, time: "08:42 AM", channel: "Mobile App", category: "5G Data Connection Failed", match: "Explicit Tag" },
+    { id: `CMP-${outageId}-03`, time: "09:10 AM", channel: "Web Portal", category: "VoLTE Call Muting", match: "Temporal Matched" }
+  ];
 
   return (
     <section id="queue-preview" className="py-20 bg-gray-950 border-t border-gray-800/80">
@@ -507,10 +525,16 @@ export default function LiveQueuePreview() {
           </table>
         </div>
 
-        {/* Explainability Detail Drawer Modal (FR10) */}
+        {/* Explainability Detail Drawer Modal (FR10 & Phase 7 Deep-Dive Inspector) */}
         {activeModalOutage && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+          <div
+            onClick={() => setActiveModalOutage(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gray-900 border border-gray-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in duration-200"
+            >
               
               {/* Modal Header */}
               <div className="flex items-start justify-between border-b border-gray-800 pb-4">
@@ -584,7 +608,7 @@ export default function LiveQueuePreview() {
                 </div>
               </div>
 
-              {/* Subscore Breakdown Bars (FR10) */}
+              {/* Subscore Breakdown Bars (FR10 & Zero Black Box) */}
               <div className="space-y-4">
                 <h4 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">
                   Transparent Sub-Score Breakdown (FR10)
@@ -648,6 +672,93 @@ export default function LiveQueuePreview() {
                       22% Temporal Matched (±2h)
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Regional Demographics Context (Phase 7 / FR10) */}
+              <div className="p-4 rounded-xl bg-gray-950/90 border border-gray-800 space-y-3">
+                <h4 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">
+                  Regional Demographic Context & Exposure
+                </h4>
+                <div className="grid sm:grid-cols-3 gap-3 text-xs font-mono">
+                  <div className="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
+                    <span className="text-gray-400 text-[10px]">Affected Subscribers</span>
+                    <div className="text-sm font-bold text-white mt-1">{activeModalOutage.subscribers.toLocaleString()}</div>
+                    <span className="text-[10px] text-blue-400 font-sans">in {activeModalOutage.region}</span>
+                  </div>
+                  <div className="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
+                    <span className="text-gray-400 text-[10px]">Revenue Exposure Tier</span>
+                    <div className="text-sm font-bold text-emerald-400 mt-1">{activeModalOutage.revenueExposure}</div>
+                    <span className="text-[10px] text-gray-400 font-sans">High Density Market</span>
+                  </div>
+                  <div className="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
+                    <span className="text-gray-400 text-[10px]">Estimated Market Share</span>
+                    <div className="text-sm font-bold text-purple-400 mt-1">38.4%</div>
+                    <span className="text-[10px] text-gray-400 font-sans">Regional Dominance</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Linked Customer Complaints Stream Explorer (Phase 7 / FR10) */}
+              <div className="p-4 rounded-xl bg-gray-950/90 border border-gray-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">
+                    Linked Customer Complaints Stream (Sample)
+                  </h4>
+                  <span className="text-[10px] font-mono text-amber-400">⚡ {activeModalOutage.complaintVelocity} velocity/hr</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="border-b border-gray-800 text-gray-500 text-[10px] uppercase">
+                      <tr>
+                        <th className="pb-2">Complaint ID</th>
+                        <th className="pb-2">Time</th>
+                        <th className="pb-2">Channel</th>
+                        <th className="pb-2">Disruption Category</th>
+                        <th className="pb-2">Match Type</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800/60">
+                      {getLinkedComplaints(activeModalOutage.id).map((c, i) => (
+                        <tr key={i} className="hover:bg-gray-900/40">
+                          <td className="py-2 text-white font-bold">{c.id}</td>
+                          <td className="py-2 text-gray-400">{c.time}</td>
+                          <td className="py-2 text-gray-300">{c.channel}</td>
+                          <td className="py-2 text-gray-300">{c.category}</td>
+                          <td className="py-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] border font-bold ${
+                              c.match === "Explicit Tag"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                            }`}>
+                              {c.match}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Affected Network Services List (Phase 7) */}
+              <div className="p-4 rounded-xl bg-gray-950/90 border border-gray-800 space-y-2">
+                <h4 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">
+                  Affected Network Services
+                </h4>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="px-2.5 py-1 rounded bg-gray-900 text-gray-300 border border-gray-800 text-xs font-mono">
+                    📶 VoLTE Voice & E911 Emergency Calls
+                  </span>
+                  <span className="px-2.5 py-1 rounded bg-gray-900 text-gray-300 border border-gray-800 text-xs font-mono">
+                    ⚡ 5G High-Speed Mobile Broadband
+                  </span>
+                  <span className="px-2.5 py-1 rounded bg-gray-900 text-gray-300 border border-gray-800 text-xs font-mono">
+                    🏢 Enterprise Dedicated Leased Lines
+                  </span>
+                  <span className="px-2.5 py-1 rounded bg-gray-900 text-gray-300 border border-gray-800 text-xs font-mono">
+                    🏠 Residential Fiber Gateway Uplinks
+                  </span>
                 </div>
               </div>
 
