@@ -14,6 +14,8 @@ interface Outage {
   openDuration: string;
   severityCode: "P1" | "P2" | "P3";
   status: "Active Triage" | "Resolving" | "Investigating";
+  confidenceFlag: boolean;
+  confidenceReason: string;
   subscores: {
     reach: number;
     complaints: number;
@@ -36,6 +38,8 @@ const mockOutages: Outage[] = [
     openDuration: "3h 45m",
     severityCode: "P1",
     status: "Active Triage",
+    confidenceFlag: true,
+    confidenceReason: "Complete Telemetry (100% Signal Integrity)",
     subscores: { reach: 95, complaints: 92, revenue: 98, duration: 88 },
     rootCause: "Major Backhaul Fiber Cut near Core Data Center"
   },
@@ -51,6 +55,8 @@ const mockOutages: Outage[] = [
     openDuration: "2h 10m",
     severityCode: "P1",
     status: "Investigating",
+    confidenceFlag: true,
+    confidenceReason: "Complete Telemetry (100% Signal Integrity)",
     subscores: { reach: 88, complaints: 90, revenue: 92, duration: 75 },
     rootCause: "Power Grid Substation Surge & Battery Bank Fail"
   },
@@ -66,6 +72,8 @@ const mockOutages: Outage[] = [
     openDuration: "5h 15m",
     severityCode: "P2",
     status: "Active Triage",
+    confidenceFlag: true,
+    confidenceReason: "Complete Telemetry (100% Signal Integrity)",
     subscores: { reach: 72, complaints: 70, revenue: 80, duration: 92 },
     rootCause: "Radio Frequency Degradation & Microwave Link Alignment"
   },
@@ -81,6 +89,8 @@ const mockOutages: Outage[] = [
     openDuration: "1h 30m",
     severityCode: "P2",
     status: "Resolving",
+    confidenceFlag: true,
+    confidenceReason: "Complete Telemetry (100% Signal Integrity)",
     subscores: { reach: 60, complaints: 65, revenue: 68, duration: 62 },
     rootCause: "Card Hardware Memory Leak on Edge Router"
   },
@@ -96,6 +106,8 @@ const mockOutages: Outage[] = [
     openDuration: "4h 00m",
     severityCode: "P3",
     status: "Active Triage",
+    confidenceFlag: false,
+    confidenceReason: "Partial Data: Missing subscriber usage snapshot (NFR Reliability)",
     subscores: { reach: 40, complaints: 38, revenue: 45, duration: 52 },
     rootCause: "Scheduled Firmware Update Delay on Secondary Switch"
   },
@@ -111,6 +123,8 @@ const mockOutages: Outage[] = [
     openDuration: "0h 45m",
     severityCode: "P3",
     status: "Resolving",
+    confidenceFlag: true,
+    confidenceReason: "Complete Telemetry (100% Signal Integrity)",
     subscores: { reach: 18, complaints: 15, revenue: 22, duration: 32 },
     rootCause: "Minor Feeder Cable Weather Degradation"
   }
@@ -119,8 +133,25 @@ const mockOutages: Outage[] = [
 export default function LiveQueuePreview() {
   const [selectedRegion, setSelectedRegion] = useState<string>("ALL");
   const [selectedPriority, setSelectedPriority] = useState<string>("ALL");
+  const [weightPreset, setWeightPreset] = useState<string>("BALANCED");
   const [execView, setExecView] = useState<boolean>(false);
   const [activeModalOutage, setActiveModalOutage] = useState<Outage | null>(null);
+
+  // Weight configuration multipliers
+  const getPresetMultiplier = (preset: string) => {
+    switch (preset) {
+      case "CUSTOMER_CENTRIC":
+        return { reach: 1.14, complaints: 1.33, revenue: 0.5, duration: 0.67 };
+      case "REVENUE_FOCUSED":
+        return { reach: 0.57, complaints: 0.5, revenue: 2.5, duration: 1.0 };
+      case "SEVERITY_ESCALATED":
+        return { reach: 0.71, complaints: 0.83, revenue: 0.75, duration: 2.33 };
+      default:
+        return { reach: 1.0, complaints: 1.0, revenue: 1.0, duration: 1.0 };
+    }
+  };
+
+  const mult = getPresetMultiplier(weightPreset);
 
   // Filter outages
   const filteredOutages = mockOutages.filter((outage) => {
@@ -170,7 +201,7 @@ export default function LiveQueuePreview() {
           </div>
         </div>
 
-        {/* Executive Banner Banner if active */}
+        {/* Executive Banner if active */}
         {execView && (
           <div className="mb-6 p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-center justify-between text-xs text-blue-200">
             <div className="flex items-center gap-2">
@@ -186,7 +217,7 @@ export default function LiveQueuePreview() {
           </div>
         )}
 
-        {/* Filters Bar */}
+        {/* Filters & Config Bar */}
         <div className="bg-gray-900/90 border border-gray-800 rounded-t-2xl p-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             
@@ -223,6 +254,21 @@ export default function LiveQueuePreview() {
               </select>
             </div>
 
+            {/* Scoring Weight Preset (FR7 / NFR Extensibility) */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-semibold">Scoring Weights:</span>
+              <select
+                value={weightPreset}
+                onChange={(e) => setWeightPreset(e.target.value)}
+                className="bg-gray-950 border border-purple-500/30 text-xs text-purple-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-purple-500 font-mono"
+              >
+                <option value="BALANCED">Balanced (35/30/20/15)</option>
+                <option value="CUSTOMER_CENTRIC">Customer-Centric (40/40/10/10)</option>
+                <option value="REVENUE_FOCUSED">Revenue-Focused (20/15/50/15)</option>
+                <option value="SEVERITY_ESCALATED">Severity-Escalated (25/25/15/35)</option>
+              </select>
+            </div>
+
           </div>
 
           <div className="text-xs text-gray-400 font-mono">
@@ -240,6 +286,7 @@ export default function LiveQueuePreview() {
                 <th className="py-3.5 px-4 font-semibold">Region & Tower</th>
                 <th className="py-3.5 px-4 font-semibold">Reach / Complaints</th>
                 <th className="py-3.5 px-4 font-semibold">Revenue Exposure</th>
+                <th className="py-3.5 px-4 font-semibold">Telemetry Confidence</th>
                 <th className="py-3.5 px-4 font-semibold">Status / Action</th>
               </tr>
             </thead>
@@ -278,7 +325,7 @@ export default function LiveQueuePreview() {
                       <span className={`text-[10px] font-extrabold font-mono px-2 py-0.5 rounded border ${
                         outage.priority === "CRITICAL" ? "bg-rose-500/10 text-rose-400 border-rose-500/30" :
                         outage.priority === "HIGH" ? "bg-amber-500/10 text-amber-400 border-amber-500/30" :
-                        outage.priority === "MEDIUM" ? "bg-blue-500/10 text-blue-400 border-blue-500/30" : "bg-gray-500/10 text-gray-400 border-gray-500/30"
+                        outage.priority === "MEDIUM" ? "bg-blue-500/10 text-blue-400 border-blue-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                       }`}>
                         {outage.priority}
                       </span>
@@ -303,6 +350,19 @@ export default function LiveQueuePreview() {
                   <td className="py-4 px-4">
                     <div className="font-mono text-emerald-400 font-semibold">{outage.revenueExposure}</div>
                     <div className="text-[11px] font-mono text-gray-400">Open {outage.openDuration}</div>
+                  </td>
+
+                  {/* Telemetry Confidence (Phase 4 / NFR Reliability) */}
+                  <td className="py-4 px-4">
+                    {outage.confidenceFlag ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span>✓</span> High Confidence
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <span>⚠️</span> Low Confidence - Partial Data
+                      </span>
+                    )}
                   </td>
 
                   {/* Status / Action */}
@@ -332,7 +392,11 @@ export default function LiveQueuePreview() {
                 <div>
                   <div className="flex items-center gap-3">
                     <span className="text-xl font-extrabold text-white font-mono">{activeModalOutage.id}</span>
-                    <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                    <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-bold border ${
+                      activeModalOutage.priority === "CRITICAL" ? "bg-rose-500/20 text-rose-400 border-rose-500/30" :
+                      activeModalOutage.priority === "HIGH" ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
+                      activeModalOutage.priority === "MEDIUM" ? "bg-blue-500/20 text-blue-400 border-blue-500/30" : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                    }`}>
                       {activeModalOutage.priority} TIER
                     </span>
                   </div>
@@ -348,17 +412,36 @@ export default function LiveQueuePreview() {
                 </button>
               </div>
 
-              {/* Score Summary */}
-              <div className="p-4 rounded-xl bg-gray-950 border border-gray-800 flex items-center justify-between">
+              {/* Score Summary & Root Cause */}
+              <div className="p-4 rounded-xl bg-gray-950 border border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="text-xs text-gray-400 uppercase tracking-wider font-mono">Composite Impact Score</div>
                   <div className="text-3xl font-extrabold font-mono text-rose-400 mt-1">
                     {activeModalOutage.score} <span className="text-xs text-gray-500 font-normal">/ 100</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-gray-400">Root Cause Identified</div>
-                  <div className="text-xs font-semibold text-gray-200 mt-1 max-w-xs">{activeModalOutage.rootCause}</div>
+                <div className="text-left sm:text-right space-y-1">
+                  <div className="text-xs text-gray-400 font-mono">Root Cause Identified</div>
+                  <div className="text-xs font-semibold text-gray-200">{activeModalOutage.rootCause}</div>
+                </div>
+              </div>
+
+              {/* Data Completeness & Telemetry Reliability (Phase 4 / NFR Reliability) */}
+              <div className="p-3 rounded-xl bg-gray-950/80 border border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 font-semibold">Data Completeness Status:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {activeModalOutage.confidenceFlag ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                      ✓ High Confidence — Complete Telemetry
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
+                      ⚠️ Low Confidence — Partial Data
+                    </span>
+                  )}
+                  <span className="text-[10px] text-gray-400">({activeModalOutage.confidenceReason})</span>
                 </div>
               </div>
 

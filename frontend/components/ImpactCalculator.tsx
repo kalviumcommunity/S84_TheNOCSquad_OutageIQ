@@ -9,23 +9,26 @@ export default function ImpactCalculator() {
   const [revenueTier, setRevenueTier] = useState<number>(90); // 0-100 Tier weight
   const [durationSeverity, setDurationSeverity] = useState<number>(65); // 0-100 Duration escalation
 
-  // Weights from PRD Section 7
-  const W_REACH = 0.35;
-  const W_COMPLAINTS = 0.30;
-  const W_REVENUE = 0.20;
-  const W_DURATION = 0.15;
+  // Config-driven weights (FR7 / NFR Extensibility)
+  const [weights, setWeights] = useState<{ reach: number; complaints: number; revenue: number; duration: number }>({
+    reach: 0.35,
+    complaints: 0.30,
+    revenue: 0.20,
+    duration: 0.15
+  });
+  const [activeWeightPreset, setActiveWeightPreset] = useState<string>("BALANCED");
 
   // Composite calculation
-  const reachComponent = reach * W_REACH;
-  const complaintComponent = complaintVelocity * W_COMPLAINTS;
-  const revenueComponent = revenueTier * W_REVENUE;
-  const durationComponent = durationSeverity * W_DURATION;
+  const reachComponent = reach * weights.reach;
+  const complaintComponent = complaintVelocity * weights.complaints;
+  const revenueComponent = revenueTier * weights.revenue;
+  const durationComponent = durationSeverity * weights.duration;
 
   const totalScore = Math.round(
     reachComponent + complaintComponent + revenueComponent + durationComponent
   );
 
-  // Priority Tier mapping
+  // Priority Tier mapping (FR7)
   const getPriorityTier = (score: number) => {
     if (score >= 75) return { label: "CRITICAL TIER", bg: "bg-rose-500/20 text-rose-400 border-rose-500/40", text: "text-rose-400", hex: "#f43f5e" };
     if (score >= 50) return { label: "HIGH TIER", bg: "bg-amber-500/20 text-amber-400 border-amber-500/40", text: "text-amber-400", hex: "#fbbf24" };
@@ -35,7 +38,7 @@ export default function ImpactCalculator() {
 
   const tier = getPriorityTier(totalScore);
 
-  // Presets
+  // Scenario Presets
   const applyPreset = (type: "fiber" | "rural" | "spike") => {
     if (type === "fiber") {
       setReach(92);
@@ -55,6 +58,20 @@ export default function ImpactCalculator() {
     }
   };
 
+  // Weight Presets (Phase 4 / NFR Extensibility)
+  const applyWeightPreset = (preset: "BALANCED" | "CUSTOMER" | "REVENUE" | "SEVERITY") => {
+    setActiveWeightPreset(preset);
+    if (preset === "BALANCED") {
+      setWeights({ reach: 0.35, complaints: 0.30, revenue: 0.20, duration: 0.15 });
+    } else if (preset === "CUSTOMER") {
+      setWeights({ reach: 0.40, complaints: 0.40, revenue: 0.10, duration: 0.10 });
+    } else if (preset === "REVENUE") {
+      setWeights({ reach: 0.20, complaints: 0.15, revenue: 0.50, duration: 0.15 });
+    } else if (preset === "SEVERITY") {
+      setWeights({ reach: 0.25, complaints: 0.25, revenue: 0.15, duration: 0.35 });
+    }
+  };
+
   return (
     <section id="calculator" className="py-20 relative bg-gray-950/80 border-y border-gray-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,7 +79,7 @@ export default function ImpactCalculator() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono font-semibold">
-            PRD SECTION 7 IMPLEMENTATION
+            PRD SECTION 7 & PHASE 4 IMPLEMENTATION
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Interactive Impact Scoring Simulator
@@ -71,7 +88,7 @@ export default function ImpactCalculator() {
             Test how OutageIQ normalizes sub-scores and computes transparent composite priorities. Adjust sliders below to simulate live telecom outage conditions.
           </p>
 
-          {/* Presets */}
+          {/* Scenario Presets */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             <span className="text-xs text-gray-400 font-semibold mr-1">Load Real-World Scenario:</span>
             <button
@@ -91,6 +108,41 @@ export default function ImpactCalculator() {
               className="px-3 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-medium transition-colors"
             >
               📻 Rural Tower Maintenance
+            </button>
+          </div>
+
+          {/* Weight Tuning Presets (Phase 4) */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-3 border-t border-gray-800/80 max-w-2xl mx-auto">
+            <span className="text-xs font-mono text-purple-400 font-semibold mr-1">Configurable Weights (FR7):</span>
+            <button
+              onClick={() => applyWeightPreset("BALANCED")}
+              className={`px-2.5 py-1 rounded text-xs font-mono transition-all ${
+                activeWeightPreset === "BALANCED"
+                  ? "bg-purple-600 text-white font-bold"
+                  : "bg-gray-900 text-gray-400 border border-gray-800 hover:text-white"
+              }`}
+            >
+              Balanced (35/30/20/15)
+            </button>
+            <button
+              onClick={() => applyWeightPreset("CUSTOMER")}
+              className={`px-2.5 py-1 rounded text-xs font-mono transition-all ${
+                activeWeightPreset === "CUSTOMER"
+                  ? "bg-purple-600 text-white font-bold"
+                  : "bg-gray-900 text-gray-400 border border-gray-800 hover:text-white"
+              }`}
+            >
+              Customer-Centric (40/40/10/10)
+            </button>
+            <button
+              onClick={() => applyWeightPreset("REVENUE")}
+              className={`px-2.5 py-1 rounded text-xs font-mono transition-all ${
+                activeWeightPreset === "REVENUE"
+                  ? "bg-purple-600 text-white font-bold"
+                  : "bg-gray-900 text-gray-400 border border-gray-800 hover:text-white"
+              }`}
+            >
+              Revenue-Focused (20/15/50/15)
             </button>
           </div>
         </div>
@@ -118,7 +170,7 @@ export default function ImpactCalculator() {
                   1. Customer Reach Sub-Score
                 </label>
                 <div className="font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                  {reach} / 100 <span className="text-gray-400 font-normal text-[11px]">(35% Wt)</span>
+                  {reach} / 100 <span className="text-gray-400 font-normal text-[11px]">({Math.round(weights.reach * 100)}% Wt)</span>
                 </div>
               </div>
               <input
@@ -142,7 +194,7 @@ export default function ImpactCalculator() {
                   2. Complaint Pressure Sub-Score
                 </label>
                 <div className="font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  {complaintVelocity} / 100 <span className="text-gray-400 font-normal text-[11px]">(30% Wt)</span>
+                  {complaintVelocity} / 100 <span className="text-gray-400 font-normal text-[11px]">({Math.round(weights.complaints * 100)}% Wt)</span>
                 </div>
               </div>
               <input
@@ -166,7 +218,7 @@ export default function ImpactCalculator() {
                   3. Revenue Exposure Sub-Score
                 </label>
                 <div className="font-mono font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                  {revenueTier} / 100 <span className="text-gray-400 font-normal text-[11px]">(20% Wt)</span>
+                  {revenueTier} / 100 <span className="text-gray-400 font-normal text-[11px]">({Math.round(weights.revenue * 100)}% Wt)</span>
                 </div>
               </div>
               <input
@@ -190,7 +242,7 @@ export default function ImpactCalculator() {
                   4. Duration & Severity Escalation
                 </label>
                 <div className="font-mono font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                  {durationSeverity} / 100 <span className="text-gray-400 font-normal text-[11px]">(15% Wt)</span>
+                  {durationSeverity} / 100 <span className="text-gray-400 font-normal text-[11px]">({Math.round(weights.duration * 100)}% Wt)</span>
                 </div>
               </div>
               <input
