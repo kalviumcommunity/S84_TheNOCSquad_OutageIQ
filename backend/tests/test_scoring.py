@@ -16,6 +16,7 @@ from scoring import (
     get_priority_tier_details,
     evaluate_data_confidence,
     load_scoring_weights,
+    get_outage_deep_dive_details,
     DEFAULT_WEIGHTS,
     WEIGHT_PRESETS
 )
@@ -115,22 +116,18 @@ class TestScoringEngine(unittest.TestCase):
 
     def test_assign_priority_tier_boundaries(self):
         """FR7: Test exact threshold boundary mapping to priority tiers."""
-        # Critical tier: >= 75.0
         self.assertEqual(assign_priority_tier(100.0), 'Critical')
         self.assertEqual(assign_priority_tier(75.0), 'Critical')
         self.assertEqual(assign_priority_tier(74.99), 'High')
 
-        # High tier: 50.0 - 74.99
         self.assertEqual(assign_priority_tier(60.0), 'High')
         self.assertEqual(assign_priority_tier(50.0), 'High')
         self.assertEqual(assign_priority_tier(49.99), 'Medium')
 
-        # Medium tier: 25.0 - 49.99
         self.assertEqual(assign_priority_tier(35.0), 'Medium')
         self.assertEqual(assign_priority_tier(25.0), 'Medium')
         self.assertEqual(assign_priority_tier(24.99), 'Low')
 
-        # Low tier: < 25.0
         self.assertEqual(assign_priority_tier(10.0), 'Low')
         self.assertEqual(assign_priority_tier(0.0), 'Low')
         self.assertEqual(assign_priority_tier(None), 'Low')
@@ -173,7 +170,7 @@ class TestScoringEngine(unittest.TestCase):
         """NFR Reliability: Test compute_impact_scores with missing telemetry."""
         data = pd.DataFrame({
             'outage_id': ['OUT-1', 'OUT-2'],
-            'subscriber_count': [None, 50000],  # OUT-1 missing usage data
+            'subscriber_count': [None, 50000],
             'complaint_count': [100, 50],
             'revenue_tier': ['Tier 2', 'Tier 1'],
             'severity': ['HIGH', 'CRITICAL']
@@ -222,6 +219,54 @@ class TestScoringEngine(unittest.TestCase):
             del os.environ['IMPACT_WEIGHT_COMPLAINTS']
             del os.environ['IMPACT_WEIGHT_REVENUE']
             del os.environ['IMPACT_WEIGHT_DURATION']
+
+    # --- Phase 7 Deep Dive Inspector Tests ---
+
+    def test_get_outage_deep_dive_details(self):
+        """FR10 & NFR Transparency: Test deep dive inspector assembling 4 subscores, demographics, complaints, and timeline."""
+        data = pd.DataFrame({
+            'outage_id': ['OUT-101', 'OUT-102'],
+            'region_id': ['REG-NORTH', 'REG-SOUTH'],
+            'subscriber_count': [100000, 20000],
+            'complaint_count': [450, 50],
+            'revenue_tier': ['Tier 1', 'Tier 2'],
+            'severity': ['CRITICAL', 'MEDIUM'],
+            'node': ['Node-DEL-991', 'Tower-BOM-402'],
+            'status': ['Active Triage', 'Resolving'],
+            'root_cause': ['Backhaul Fiber Cut', 'Power Surge']
+        })
+        scored = compute_impact_scores(data)
+
+        details = get_outage_deep_dive_details('OUT-101', scored)
+        self.assertEqual(details['outage_id'], 'OUT-101')
+        self.assertEqual(details['impact_score'], 100.0)
+        self.assertEqual(details['priority_tier'], 'Critical')
+        self.assertIn('subscore_breakdown', details)
+        self.assertIn('reach', details['subscore_breakdown'])
+        self.assertIn('complaints', details['subscore_breakdown'])
+        self.assertIn('revenue', details['subscore_breakdown'])
+        self.assertIn('duration', details['subscore_breakdown'])
+
+        # Verify exact sum decomposition: sum(subscores) == impact_score
+        breakdown = details['subscore_breakdown']
+        sum_pts = (
+            breakdown['reach']['contribution_pts'] +
+            breakdown['complaints']['contribution_pts'] +
+            breakdown['revenue']['contribution_pts'] +
+            breakdown['duration']['contribution_pts']
+        )
+        self.assertAlmostEqual(details['impact_score'], sum_pts, places=1)
+
+        # Demographics and linked complaints
+        self.assertEqual(details['demographics']['total_subscribers'], 100000)
+        self.assertGreater(len(details['linked_complaints']), 0)
+        self.assertGreater(len(details['affected_services']), 0)
+
+    def test_get_outage_deep_dive_details_not_found(self):
+        """FR10: Test exception raised when outage ID does not exist."""
+        data = pd.DataFrame({'outage_id': ['OUT-1'], 'subscriber_count': [1000]})
+        with self.assertRaises(KeyError):
+            get_outage_deep_dive_details('OUT-NONEXISTENT', data)
 
 
 if __name__ == '__main__':
