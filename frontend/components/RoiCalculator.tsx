@@ -20,7 +20,7 @@ export default function RoiCalculator() {
   const hoursSavedPerYear = Math.round(annualOutages * 1.8); // 1.8 hours saved per outage triage
 
   return (
-    <section className="py-20 bg-gray-950/90 border-t border-gray-800/80">
+    <section id="roi" className="py-20 bg-gray-950/90 border-t border-gray-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
