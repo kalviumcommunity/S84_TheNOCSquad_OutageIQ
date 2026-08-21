@@ -242,10 +242,86 @@ export default function LiveQueuePreview() {
     { id: `CMP-${outageId}-03`, time: "09:10 AM", channel: "Web Portal", category: "VoLTE Call Muting", match: "Temporal Matched" }
   ];
 
+  const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
+
+  // Calculate dynamic KPIs (FR8 & Phase 9)
+  const totalSubscribers = mockOutages.reduce((acc, o) => acc + o.subscribers, 0);
+  const criticalCount = mockOutages.filter((o) => o.priority === "CRITICAL" || o.score >= 75.0).length;
+
   return (
     <section id="queue-preview" className="py-20 bg-gray-950 border-t border-gray-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
+        {/* Critical Incident Alert Banner (Phase 9 / FR16) */}
+        {!alertDismissed && (
+          <div className="mb-8 p-4 rounded-2xl bg-rose-950/60 border-2 border-rose-500/50 shadow-2xl animate-pulse-slow flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <span className="p-2 rounded-xl bg-rose-500/20 text-2xl border border-rose-500/40">🚨</span>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded bg-rose-500 text-white font-mono text-[11px] font-extrabold uppercase tracking-wider">
+                    CRITICAL P1 ALERT (SCORE ≥ 75)
+                  </span>
+                  <span className="font-mono text-rose-300 font-bold text-xs">OUT-8902 • Impact Score 94.2 / 100</span>
+                </div>
+                <p className="text-gray-200 text-xs sm:text-sm mt-1 font-medium">
+                  <strong>North Region (Node-DEL-991):</strong> Major Backhaul Fiber Cut affecting 45,000 subscribers ($45,000/hr exposure). SLA Breached.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0 self-end md:self-auto">
+              <button
+                onClick={() => setActiveModalOutage(mockOutages[0])}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono font-bold transition-colors shadow-lg shadow-rose-900/40 flex items-center gap-1.5"
+              >
+                <span>⚡ Triage Now</span>
+              </button>
+              <button
+                onClick={() => setAlertDismissed(true)}
+                className="px-3 py-2 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white text-xs font-mono transition-colors border border-gray-800"
+              >
+                Acknowledge Alert
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Executive KPI Summary Ribbon (Phase 9 / FR8) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gray-900/90 border border-gray-800 rounded-2xl p-4 shadow-lg">
+            <span className="text-gray-400 font-mono text-[11px] uppercase tracking-wider">Active Incidents</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono mt-1">
+              {mockOutages.length} <span className="text-xs text-gray-500 font-normal">Total Open</span>
+            </div>
+            <span className="text-[11px] font-mono text-blue-400 mt-1 block">Across 5 Monitored Sectors</span>
+          </div>
+
+          <div className="bg-gray-900/90 border border-rose-500/20 rounded-2xl p-4 shadow-lg">
+            <span className="text-gray-400 font-mono text-[11px] uppercase tracking-wider">Critical Incidents (≥75)</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-rose-400 font-mono mt-1">
+              {criticalCount} <span className="text-xs text-rose-300/70 font-normal">P1 Tier</span>
+            </div>
+            <span className="text-[11px] font-mono text-rose-400 mt-1 block">Immediate Dispatch Active</span>
+          </div>
+
+          <div className="bg-gray-900/90 border border-amber-500/20 rounded-2xl p-4 shadow-lg">
+            <span className="text-gray-400 font-mono text-[11px] uppercase tracking-wider">Total Customers Impacted</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-mono mt-1">
+              {totalSubscribers.toLocaleString()}
+            </div>
+            <span className="text-[11px] font-mono text-emerald-400 mt-1 block">$133.8k / hr revenue risk</span>
+          </div>
+
+          <div className="bg-gray-900/90 border border-emerald-500/20 rounded-2xl p-4 shadow-lg">
+            <span className="text-gray-400 font-mono text-[11px] uppercase tracking-wider">Average Resolution (MTTR)</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-mono mt-1">
+              1.8 <span className="text-xs text-gray-400 font-normal">hrs</span>
+            </div>
+            <span className="text-[11px] font-mono text-emerald-400 mt-1 block">⚡ 35% faster vs baseline</span>
+          </div>
+        </div>
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
           <div>
