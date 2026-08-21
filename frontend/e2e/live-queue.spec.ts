@@ -114,6 +114,17 @@ test.describe('Live Prioritized Outage Queue Component (PRD Sec 8.3 & FR8-FR16)'
     await expect(queueSection.locator('text=Executive View Active')).not.toBeVisible();
   });
 
+  test('should support Export CSV and Export Briefing summary (FR14 & Phase 10)', async ({ page }) => {
+    const queueSection = page.locator('#queue-preview');
+    await queueSection.scrollIntoViewIfNeeded();
+
+    const exportCsvBtn = queueSection.getByRole('button', { name: /Export CSV/i }).first();
+    await expect(exportCsvBtn).toBeVisible();
+
+    const exportBriefingBtn = queueSection.getByRole('button', { name: /Export Briefing/i }).first();
+    await expect(exportBriefingBtn).toBeVisible();
+  });
+
   test('should open and inspect explainable outage detail modal (FR10)', async ({ page }) => {
     const queueSection = page.locator('#queue-preview');
     

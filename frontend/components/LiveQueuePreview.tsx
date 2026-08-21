@@ -248,6 +248,37 @@ export default function LiveQueuePreview() {
   const totalSubscribers = mockOutages.reduce((acc, o) => acc + o.subscribers, 0);
   const criticalCount = mockOutages.filter((o) => o.priority === "CRITICAL" || o.score >= 75.0).length;
 
+  // Export prioritized list as CSV (FR14 & Phase 10)
+  const handleExportCsv = () => {
+    const headers = "Rank,Outage ID,Region,Node,Severity Code,Priority Tier,Impact Score,Subscribers,Complaints/hr,Revenue Exposure,Open Duration,SLA Status,Root Cause\n";
+    const rows = displayOutages.map((o, i) =>
+      `"${i + 1}","${o.id}","${o.region}","${o.node}","${o.severityCode}","${o.priority}","${o.score}","${o.subscribers}","${o.complaintVelocity}","${o.revenueExposure}","${o.openDuration}","${o.slaStatus}","${o.rootCause}"`
+    ).join("\n");
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `outageiq_prioritized_queue_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export Executive PDF Summary / Briefing Report (FR14 & Phase 10)
+  const handleExportSummaryReport = () => {
+    const reportHeader = `# OutageIQ Executive Incident Briefing (PRD Section 8.3 & FR14)\nGenerated: ${new Date().toUTCString()}\nClassification: TELECOM OPERATIONS CONFIDENTIAL\n\n`;
+    const kpiSummary = `## Executive Operations KPI Summary\n- Total Active Incidents: ${mockOutages.length}\n- Critical Tier P1 Incidents (Score >= 75): ${criticalCount}\n- Total Impacted Customer Base: ${totalSubscribers.toLocaleString()} subscribers\n- Mean Time to Resolve (MTTR): 1.8 hrs\n\n`;
+    const outagesHeader = `## Top Prioritized Incidents\n` + displayOutages.map((o, i) => `[#${i + 1}] ${o.id} (${o.region} - ${o.node}) | Impact Score: ${o.score} | Priority: ${o.priority} | Affected: ${o.subscribers.toLocaleString()} subs | Revenue: ${o.revenueExposure} | Root Cause: ${o.rootCause}`).join("\n\n");
+    const blob = new Blob([reportHeader + kpiSummary + outagesHeader], { type: "text/markdown;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `outageiq_executive_summary_${new Date().toISOString().split("T")[0]}.md`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <section id="queue-preview" className="py-20 bg-gray-950 border-t border-gray-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -359,24 +390,32 @@ export default function LiveQueuePreview() {
 
         {/* Executive Banner if active */}
         {execView && (
-          <div className="mb-6 p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-center justify-between text-xs text-blue-200">
+          <div className="mb-6 p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-200">
             <div className="flex items-center gap-2">
               <span className="text-base">📊</span>
               <span><strong>Executive View Active:</strong> Displaying Top 5 highest impact outages across all regions for weekly leadership reporting.</span>
             </div>
-            <button
-              onClick={() => alert("Simulating PDF Export generation... (FR14 Export complete)")}
-              className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
-            >
-              Export PDF Summary
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleExportCsv}
+                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 font-mono font-semibold transition-colors border border-gray-700 flex items-center gap-1"
+              >
+                <span>📥</span> Export CSV
+              </button>
+              <button
+                onClick={handleExportSummaryReport}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-mono font-semibold transition-colors flex items-center gap-1"
+              >
+                <span>📄</span> Export PDF Summary
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Search & Multi-Dimensional Filter Toolbar (Phase 6 / FR13) */}
+        {/* Search & Multi-Dimensional Filter Toolbar (Phase 6 / FR13 & Phase 10 / FR14) */}
         <div className="bg-gray-900/90 border border-gray-800 rounded-t-2xl p-4 space-y-3">
           
-          {/* Top Row: Search & Reset */}
+          {/* Top Row: Search, Reset & Export Actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
               <input
@@ -389,14 +428,28 @@ export default function LiveQueuePreview() {
               <span className="absolute left-2.5 top-2 text-xs text-gray-500">🔍</span>
             </div>
 
-            {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
               <button
-                onClick={resetFilters}
-                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono font-semibold transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+                onClick={handleExportCsv}
+                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono font-semibold transition-colors border border-gray-700 flex items-center gap-1.5"
               >
-                <span>✕</span> Reset Filters
+                <span>📥</span> Export CSV
               </button>
-            )}
+              <button
+                onClick={handleExportSummaryReport}
+                className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-blue-400 text-xs font-mono font-semibold transition-colors border border-gray-700 flex items-center gap-1.5"
+              >
+                <span>📄</span> Export Briefing
+              </button>
+              {hasActiveFilters && (
+                <button
+                  onClick={resetFilters}
+                  className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono font-semibold transition-colors flex items-center gap-1.5"
+                >
+                  <span>✕</span> Reset Filters
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Bottom Row: Select Filters */}
