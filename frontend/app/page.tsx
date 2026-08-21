@@ -7,6 +7,7 @@ import ProblemSolution from "@/components/ProblemSolution";
 import PersonasSection from "@/components/PersonasSection";
 import RegionalImpactOverview from "@/components/RegionalImpactOverview";
 import LiveQueuePreview from "@/components/LiveQueuePreview";
+import ImpactTrendAnalytics from "@/components/ImpactTrendAnalytics";
 import MethodologySection from "@/components/MethodologySection";
 import PrdRequirementsExplorer from "@/components/PrdRequirementsExplorer";
 import RoiCalculator from "@/components/RoiCalculator";
@@ -35,8 +36,11 @@ export default function Home() {
         {/* Regional Impact Heatmap & Geo-Operational Analytics (PRD Sec 8.3 & FR11) */}
         <RegionalImpactOverview />
 
-        {/* Interactive Triage Queue Dashboard Preview (PRD Sec 8.3 & FR9-FR10) */}
+        {/* Interactive Triage Queue Dashboard Preview (PRD Sec 8.3 & FR9-FR10, FR16 Alerting, FR8 KPIs) */}
         <LiveQueuePreview />
+
+        {/* Rolling Outage Volume & Historical Trend Analytics (PRD Sec 8.3 & FR12) */}
+        <ImpactTrendAnalytics />
 
         {/* Scoring Methodology Pipeline (PRD Sec 6 & 7) */}
         <MethodologySection />

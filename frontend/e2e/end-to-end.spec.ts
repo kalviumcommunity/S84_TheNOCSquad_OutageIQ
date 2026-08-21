@@ -21,7 +21,7 @@ test.describe('OutageIQ Full User Journey & Responsiveness E2E', () => {
 
     const regionSelect = queueSection.locator('select').first();
     await regionSelect.selectOption('North Region');
-    await expect(queueSection.locator('text=OUT-8902')).toBeVisible();
+    await expect(queueSection.getByText('OUT-8902', { exact: true })).toBeVisible();
 
     await queueSection.locator('tr').filter({ hasText: 'OUT-8902' }).click();
     const modal = page.locator('div.fixed.inset-0');
