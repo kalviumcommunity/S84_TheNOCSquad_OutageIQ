@@ -1,0 +1,220 @@
+name: Build, Push, and Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    name: Build Docker Image, Push to Docker Hub & Deploy to Render
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Extract Tag Name
+        id: vars
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Deploying version tag: ${TAG_NAME}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/outageiq
+          tags: |
+            type=raw,value=${{ steps.vars.outputs.tag }}
+            type=raw,value=latest
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Trigger Deployment on Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          python3 - <<'EOF'
+          import os
+          import sys
+          import json
+          import urllib.request
+          import urllib.parse
+          import urllib.error
+
+          def deploy():
+              api_key = os.environ.get("RENDER_API_KEY", "").strip()
+              service_id = os.environ.get("RENDER_SERVICE_ID", "").strip()
+              hook_url = os.environ.get("RENDER_DEPLOY_HOOK_URL", "").strip()
+              docker_user = os.environ.get("DOCKERHUB_USERNAME", "").strip()
+              image_tag = os.environ.get("IMAGE_TAG", "").strip()
+
+              print("==========================================================")
+              print(f" Initiating Deployment on Render for Tag: {image_tag}")
+              print("==========================================================")
+
+              # Strategy 1: Render REST API v1
+              if api_key and service_id:
+                  print(f"🚀 Inspecting Render service '{service_id}' via Render API...")
+                  current_image = None
+                  try:
+                      req = urllib.request.Request(
+                          f"https://api.render.com/v1/services/{service_id}",
+                          headers={
+                              "Authorization": f"Bearer {api_key}",
+                              "Accept": "application/json"
+                          }
+                      )
+                      with urllib.request.urlopen(req) as resp:
+                          data = json.loads(resp.read().decode())
+                          service_name = data.get("name", service_id)
+                          print(f"✓ Found Render service: {service_name}")
+                          
+                          # Extract imagePath configured on Render
+                          service_details = data.get("serviceDetails", {})
+                          if isinstance(service_details, dict):
+                              current_image = (
+                                  service_details.get("imagePath")
+                                  or service_details.get("image", {}).get("imagePath")
+                              )
+                          if not current_image:
+                              current_image = data.get("imagePath")
+
+                          if current_image:
+                              print(f"ℹ️ Render currently configured image: {current_image}")
+                  except Exception as e:
+                      print(f"⚠️ Note: Could not fetch service details via GET: {e}")
+
+                  # Build candidate image identifiers matching Render's repository requirement
+                  candidate_images = []
+                  if current_image:
+                      # Strip existing tag/digest to get the exact base repository configured in Render
+                      base = current_image.split("@")[0].split(":")[0]
+                      candidate_images.append(f"{base}:{image_tag}")
+
+                  if docker_user:
+                      candidate_images.append(f"{docker_user}/outageiq:{image_tag}")
+                      candidate_images.append(f"docker.io/{docker_user}/outageiq:{image_tag}")
+
+                  # Deduplicate while preserving order
+                  seen = set()
+                  candidates = [x for x in candidate_images if not (x in seen or seen.add(x))]
+
+                  for target in candidates:
+                      print(f"🚀 Triggering deploy with image: {target}...")
+                      try:
+                          payload = json.dumps({"imageUrl": target}).encode()
+                          req = urllib.request.Request(
+                              f"https://api.render.com/v1/services/{service_id}/deploys",
+                              data=payload,
+                              headers={
+                                  "Authorization": f"Bearer {api_key}",
+                                  "Accept": "application/json",
+                                  "Content-Type": "application/json"
+                              },
+                              method="POST"
+                          )
+                          with urllib.request.urlopen(req) as resp:
+                              res_body = resp.read().decode()
+                              print(f"🎉 Render API deployment triggered successfully (HTTP {resp.status})!")
+                              print(f"Response: {res_body}")
+                              return True
+                      except urllib.error.HTTPError as e:
+                          err_msg = e.read().decode()
+                          print(f"⚠️ Render API returned {e.code}: {err_msg}")
+                      except Exception as e:
+                          print(f"⚠️ Request error: {e}")
+
+                  # Fallback: Trigger deploy with standard service configuration
+                  print("🚀 Triggering Render deploy with standard service configuration...")
+                  try:
+                      req = urllib.request.Request(
+                          f"https://api.render.com/v1/services/{service_id}/deploys",
+                          data=b"{}",
+                          headers={
+                              "Authorization": f"Bearer {api_key}",
+                              "Accept": "application/json",
+                              "Content-Type": "application/json"
+                          },
+                          method="POST"
+                      )
+                      with urllib.request.urlopen(req) as resp:
+                          res_body = resp.read().decode()
+                          print(f"🎉 Render standard deployment triggered successfully (HTTP {resp.status})!")
+                          print(f"Response: {res_body}")
+                          return True
+                  except urllib.error.HTTPError as e:
+                      err_msg = e.read().decode()
+                      print(f"⚠️ Render API standard deploy returned {e.code}: {err_msg}")
+                  except Exception as e:
+                      print(f"⚠️ Standard deploy request error: {e}")
+
+              # Strategy 2: Render Deploy Hook URL
+              if hook_url:
+                  print("🚀 Triggering Render deploy via Deploy Hook...")
+                  hook_candidates = []
+                  if docker_user:
+                      hook_candidates.append(f"{docker_user}/outageiq:{image_tag}")
+                      hook_candidates.append(f"docker.io/{docker_user}/outageiq:{image_tag}")
+
+                  for target in hook_candidates:
+                      sep = "&" if "?" in hook_url else "?"
+                      target_url = f"{hook_url}{sep}imageUrl={urllib.parse.quote(target)}"
+                      try:
+                          req = urllib.request.Request(target_url, data=b"", method="POST")
+                          with urllib.request.urlopen(req) as resp:
+                              print(f"🎉 Render Deploy Hook triggered successfully with image {target} (HTTP {resp.status})!")
+                              return True
+                      except urllib.error.HTTPError as e:
+                          print(f"⚠️ Deploy Hook with image {target} returned {e.code}: {e.read().decode()}")
+                      except Exception as e:
+                          print(f"⚠️ Deploy Hook error: {e}")
+
+                  # Fallback to clean deploy hook without query parameters
+                  try:
+                      print("🚀 Triggering base Deploy Hook without parameters...")
+                      req = urllib.request.Request(hook_url, data=b"", method="POST")
+                      with urllib.request.urlopen(req) as resp:
+                          print(f"🎉 Render base Deploy Hook triggered successfully (HTTP {resp.status})!")
+                          return True
+                  except urllib.error.HTTPError as e:
+                      print(f"⚠️ Base Deploy Hook returned {e.code}: {e.read().decode()}")
+                  except Exception as e:
+                      print(f"⚠️ Base Deploy Hook error: {e}")
+
+              return False
+
+          if __name__ == "__main__":
+              success = deploy()
+              if success:
+                  sys.exit(0)
+              else:
+                  print("\n❌ Deployment trigger failed. Please verify your Render credentials.")
+                  sys.exit(1)
+          EOF

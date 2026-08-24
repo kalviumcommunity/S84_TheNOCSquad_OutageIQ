@@ -28,7 +28,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'python3 ../server.py --port 3000',
+    command: 'python3 ../backend/server.py --port 3000',
     url: 'http://localhost:3000',
     reuseExistingServer: false,
     timeout: 120000,

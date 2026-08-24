@@ -1,22 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { INITIAL_OUTAGES, REGIONS_DATA, OutageItem } from "@/lib/data";
-import { fetchOutages } from "@/lib/api";
+import React, { useState } from "react";
+import { REGIONS_DATA, OutageItem } from "@/lib/data";
 import { downloadExecutivePdf } from "@/lib/pdf";
-import { FileText, FileSpreadsheet, Globe, Download, Check, Printer } from "lucide-react";
+import { useFilter } from "@/context/FilterContext";
+import { useAuth } from "@/context/AuthContext";
+import { FileText, FileSpreadsheet, Globe, Download, Check, Filter, RotateCcw, Award, Shield } from "lucide-react";
 
 export default function ExportView() {
-  const [outages, setOutages] = useState<OutageItem[]>(INITIAL_OUTAGES);
-  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
+  const { user, isLeadership } = useAuth();
+  const {
+    sortedOutages,
+    hasActiveFilters,
+    resetFilters,
+    selectedRegion,
+    selectedPriority,
+    statusFilter
+  } = useFilter();
 
-  useEffect(() => {
-    fetchOutages().then((data) => {
-      if (data && data.length > 0) {
-        setOutages(data);
-      }
-    });
-  }, []);
+  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
 
   const triggerDownloadMessage = (msg: string) => {
     setDownloadSuccess(msg);
@@ -26,8 +28,8 @@ export default function ExportView() {
   // Export 1: Prioritized Outage CSV
   const handleExportPrioritizedCsv = () => {
     const headers = "Rank,Outage ID,Region,Node,Severity,Impact Score,Status,Complaints,Duration,Priority,Customer Reach (35%),Complaint Pressure (30%),Revenue Exposure (20%),Duration & Severity (15%),Root Cause\n";
-    const rows = outages.map((o, idx) =>
-      `"${idx + 1}","${o.id}","${o.region}","${o.node}","${o.severity}","${o.impactScore}","${o.status}","${o.complaints}","${o.duration}","${o.priority}","${o.subscores.reach}","${o.subscores.complaints}","${o.subscores.revenue}","${o.subscores.duration}","${o.rootCause}"`
+    const rows = sortedOutages.map((o, idx) =>
+      `"${idx + 1}","${o.id}","${o.region}","${o.node}","${o.severity}","${o.impactScore}","${o.status}","${o.complaints}","${o.duration}","${o.priority}","${o.subscores?.reach || 60}","${o.subscores?.complaints || 60}","${o.subscores?.revenue || 60}","${o.subscores?.duration || 60}","${o.rootCause}"`
     ).join("\n");
 
     const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
@@ -39,7 +41,7 @@ export default function ExportView() {
     link.click();
     document.body.removeChild(link);
 
-    triggerDownloadMessage("Prioritized Outage List CSV downloaded successfully!");
+    triggerDownloadMessage(`Prioritized Outage List CSV (${sortedOutages.length} records) downloaded successfully!`);
   };
 
   // Export 2: Executive Summary PDF
@@ -49,12 +51,12 @@ export default function ExportView() {
         title: "OutageIQ Executive Incident Briefing",
         subtitle: `Generated: ${new Date().toLocaleDateString('en-US', { dateStyle: 'full' })} | Confidential`,
         kpis: [
-          { label: "Total Outages", value: String(outages.length), sub: "+12% vs prior week" },
-          { label: "Critical P1", value: String(outages.filter(o => o.severity === "Critical").length), sub: "Requires immediate dispatch" },
-          { label: "Total Reach", value: "2.48M", sub: "Across 8 monitored circles" },
+          { label: "Total Outages", value: String(sortedOutages.length), sub: "+12% vs prior week" },
+          { label: "Critical P1", value: String(sortedOutages.filter(o => o.severity === "Critical" || o.priority === "P1").length), sub: "Requires immediate dispatch" },
+          { label: "Total Reach", value: "2.48M", sub: selectedRegion === "ALL" ? "Across all circles" : `In ${selectedRegion}` },
           { label: "SLA Compliance", value: "84%", sub: "Target >= 90%" },
         ],
-        topOutages: outages.slice(0, 5),
+        topOutages: sortedOutages.slice(0, 5),
       });
       triggerDownloadMessage("Executive Incident Briefing PDF downloaded successfully!");
     } catch (_) {
@@ -64,8 +66,12 @@ export default function ExportView() {
 
   // Export 3: Region Impact CSV
   const handleExportRegionCsv = () => {
+    const regionSource = selectedRegion === "ALL" 
+      ? REGIONS_DATA 
+      : REGIONS_DATA.filter(r => r.name.toLowerCase() === selectedRegion.toLowerCase());
+
     const headers = "Rank,Region Name,Subscriber Base,Impact Score,Revenue Tier,Active Outages,Hourly Exposure,SLA Compliance,Dominant Severity\n";
-    const rows = REGIONS_DATA.map((r, idx) =>
+    const rows = regionSource.map((r, idx) =>
       `"${idx + 1}","${r.name}","${r.subscriberCount}","${r.impactScore}","${r.revenueTier}","${r.activeOutages}","${r.revenueExposureHourly}","${r.slaCompliance}%","${r.dominantSeverity}"`
     ).join("\n");
 
@@ -78,24 +84,81 @@ export default function ExportView() {
     link.click();
     document.body.removeChild(link);
 
-    triggerDownloadMessage("Region Impact Report CSV downloaded successfully!");
+    triggerDownloadMessage(`Region Impact Report CSV (${regionSource.length} regions) downloaded successfully!`);
   };
 
   return (
     <div className="space-y-6">
-      
-      {/* Toast */}
+      {/* Leadership Executive Banner for Vikram */}
+      {isLeadership && (
+        <div className="bg-amber-950/80 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-100 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shrink-0 shadow-md">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white">Executive Reporting &amp; Briefing Portal</span>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  Confidential Boardroom Exports
+                </span>
+              </div>
+              <p className="text-xs text-amber-300/90 mt-0.5">
+                Generate high-resolution Executive PDF Incident Briefings and prioritized CSV data exports for C-suite and board stakeholders.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 self-start sm:self-auto shrink-0">
+            <Shield className="w-3.5 h-3.5 text-amber-400" />
+            <span>Executive Export Mode</span>
+          </div>
+        </div>
+      )}
+
+      {/* Success Download Toast */}
       {downloadSuccess && (
         <div className="p-3 bg-emerald-900 text-white rounded-xl text-xs font-semibold shadow-lg animate-in fade-in flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-400" />
             <span>{downloadSuccess}</span>
           </div>
-          <button onClick={() => setDownloadSuccess(null)} className="text-emerald-200 hover:text-white ml-2">✕</button>
+          <button onClick={() => setDownloadSuccess(null)} className="text-emerald-200 hover:text-white ml-2 cursor-pointer">
+            ✕
+          </button>
         </div>
       )}
 
-      {/* Top 3 Export Report Cards (Figma UI matching) */}
+      {/* Active Filter Bar */}
+      {hasActiveFilters && (
+        <div className="bg-purple-50/90 border border-purple-200 rounded-xl p-3 px-4 flex items-center justify-between text-xs text-purple-900 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+            <span>
+              Exports will reflect active filters:{" "}
+              {selectedRegion !== "ALL" && (
+                <strong className="bg-white border border-purple-200 px-1.5 py-0.5 rounded text-purple-950 mr-1.5">
+                  Region: {selectedRegion}
+                </strong>
+              )}
+              {selectedPriority !== "ALL" && (
+                <strong className="bg-white border border-purple-200 px-1.5 py-0.5 rounded text-purple-950 mr-1.5">
+                  Priority: {selectedPriority}
+                </strong>
+              )}
+              ({sortedOutages.length} matching outages)
+            </span>
+          </div>
+          <button
+            onClick={resetFilters}
+            className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 hover:text-purple-900 bg-white hover:bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs transition-colors cursor-pointer shrink-0"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset Filters</span>
+          </button>
+        </div>
+      )}
+
+      {/* Top 3 Export Report Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Card 1: Prioritized Outage List */}
@@ -110,7 +173,7 @@ export default function ExportView() {
               </h3>
             </div>
             <p className="text-xs text-gray-500 font-medium pt-1">
-              Full ranked list with impact scores
+              Full ranked list with impact scores ({sortedOutages.length} items)
             </p>
           </div>
 
@@ -119,7 +182,7 @@ export default function ExportView() {
               onClick={handleExportPrioritizedCsv}
               className="px-3.5 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold font-mono transition-colors cursor-pointer shadow-2xs"
             >
-              CSV
+              Export CSV
             </button>
           </div>
         </div>
@@ -145,7 +208,7 @@ export default function ExportView() {
               onClick={handleExportExecutivePdf}
               className="px-3.5 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold font-mono transition-colors cursor-pointer shadow-2xs"
             >
-              PDF
+              Export PDF
             </button>
           </div>
         </div>
@@ -171,7 +234,7 @@ export default function ExportView() {
               onClick={handleExportRegionCsv}
               className="px-3.5 py-1.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold font-mono transition-colors cursor-pointer shadow-2xs"
             >
-              CSV
+              Export CSV
             </button>
           </div>
         </div>
@@ -181,95 +244,106 @@ export default function ExportView() {
       {/* Bottom Card: Data Preview — Current Prioritized Queue */}
       <div className="bg-white border border-gray-200/80 rounded-2xl p-5 shadow-xs space-y-4">
         
-        <div>
+        <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-gray-900 font-sans">
-            Data Preview — Current Prioritized Queue
+            Data Preview — Current Prioritized Queue ({sortedOutages.length} records)
           </h2>
+          {hasActiveFilters && (
+            <span className="text-[11px] text-purple-700 font-mono font-semibold">
+              Filtered View
+            </span>
+          )}
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
-                <th className="pb-3 font-semibold">Rank</th>
-                <th className="pb-3 font-semibold">Outage ID</th>
-                <th className="pb-3 font-semibold">Region</th>
-                <th className="pb-3 font-semibold">Severity</th>
-                <th className="pb-3 font-semibold">Impact Score</th>
-                <th className="pb-3 font-semibold">Status</th>
-                <th className="pb-3 font-semibold">Complaints</th>
-                <th className="pb-3 font-semibold">Duration</th>
-                <th className="pb-3 font-semibold">Priority</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {INITIAL_OUTAGES.map((outage, idx) => (
-                <tr key={outage.id} className="hover:bg-gray-50/80 transition-colors">
-                  <td className="py-3 font-mono text-gray-400 font-bold">
-                    #{idx + 1}
-                  </td>
-                  <td className="py-3 font-mono font-bold text-purple-600">
-                    {outage.id}
-                  </td>
-                  <td className="py-3 font-semibold text-gray-800">
-                    {outage.region}
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                        outage.severity === "Critical"
-                          ? "bg-rose-100 text-rose-700"
-                          : outage.severity === "High"
-                          ? "bg-amber-100 text-amber-700"
-                          : outage.severity === "Medium"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}
-                    >
-                      {outage.severity}
-                    </span>
-                  </td>
-                  <td className="py-3 font-mono font-bold text-gray-900">
-                    {outage.impactScore}
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
-                        outage.status === "Open"
-                          ? "bg-rose-50 text-rose-600 border border-rose-100"
-                          : outage.status === "In Progress"
-                          ? "bg-blue-50 text-blue-600 border border-blue-100"
-                          : "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                      }`}
-                    >
-                      {outage.status}
-                    </span>
-                  </td>
-                  <td className="py-3 text-gray-700 font-mono">
-                    {outage.complaints.toLocaleString()}
-                  </td>
-                  <td className="py-3 text-gray-500 font-mono text-[11px]">
-                    {outage.duration}
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold text-white ${
-                        outage.priority === "P1"
-                          ? "bg-rose-500"
-                          : outage.priority === "P2"
-                          ? "bg-amber-500"
-                          : "bg-gray-400"
-                      }`}
-                    >
-                      {outage.priority}
-                    </span>
-                  </td>
+        {sortedOutages.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-gray-100 text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
+                  <th className="pb-3 font-semibold">Rank</th>
+                  <th className="pb-3 font-semibold">Outage ID</th>
+                  <th className="pb-3 font-semibold">Region</th>
+                  <th className="pb-3 font-semibold">Severity</th>
+                  <th className="pb-3 font-semibold">Impact Score</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                  <th className="pb-3 font-semibold">Complaints</th>
+                  <th className="pb-3 font-semibold">Duration</th>
+                  <th className="pb-3 font-semibold">Priority</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {sortedOutages.map((outage, idx) => (
+                  <tr key={outage.id} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="py-3 font-mono text-gray-400 font-bold">
+                      #{idx + 1}
+                    </td>
+                    <td className="py-3 font-mono font-bold text-purple-600">
+                      {outage.id}
+                    </td>
+                    <td className="py-3 font-semibold text-gray-800">
+                      {outage.region}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          outage.severity === "Critical"
+                            ? "bg-rose-100 text-rose-700"
+                            : outage.severity === "High"
+                            ? "bg-amber-100 text-amber-700"
+                            : outage.severity === "Medium"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-emerald-100 text-emerald-700"
+                        }`}
+                      >
+                        {outage.severity}
+                      </span>
+                    </td>
+                    <td className="py-3 font-mono font-bold text-gray-900">
+                      {outage.impactScore}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                          outage.status === "Open"
+                            ? "bg-rose-50 text-rose-600 border border-rose-100"
+                            : outage.status === "In Progress" || outage.status === "Active Triage"
+                            ? "bg-blue-50 text-blue-600 border border-blue-100"
+                            : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                        }`}
+                      >
+                        {outage.status}
+                      </span>
+                    </td>
+                    <td className="py-3 text-gray-700 font-mono">
+                      {outage.complaints.toLocaleString()}
+                    </td>
+                    <td className="py-3 text-gray-500 font-mono text-[11px]">
+                      {outage.duration}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold text-white ${
+                          outage.priority === "P1"
+                            ? "bg-rose-500"
+                            : outage.priority === "P2"
+                            ? "bg-amber-500"
+                            : "bg-gray-400"
+                        }`}
+                      >
+                        {outage.priority}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-8 text-center text-xs text-gray-500">
+            No outages match the active filter criteria.
+          </div>
+        )}
 
         {/* Bottom Actions */}
         <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100">

@@ -43,10 +43,11 @@ export function mapRowToOutageItem(row: any): OutageItem {
   };
 }
 
-export async function fetchOutages(params?: { region?: string; severity?: string; sort?: string }): Promise<OutageItem[]> {
+export async function fetchOutages(params?: { region?: string; severity?: string; status?: string; sort?: string }): Promise<OutageItem[]> {
   const qs = new URLSearchParams();
   if (params?.region && params.region !== "ALL") qs.set("region", params.region);
   if (params?.severity && params.severity !== "ALL") qs.set("severity", params.severity);
+  if (params?.status && params.status !== "ALL") qs.set("status", params.status);
   if (params?.sort) qs.set("sort", params.sort);
 
   const endpoint = `/api/outages${qs.toString() ? `?${qs.toString()}` : ""}`;

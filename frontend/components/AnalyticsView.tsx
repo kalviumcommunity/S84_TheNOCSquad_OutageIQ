@@ -4,9 +4,29 @@ import React, { useState, useEffect } from "react";
 import { fetchOutages, fetchAnalytics, fetchExecutiveSummary, AnalyticsData } from "@/lib/api";
 import { OutageItem, SEVEN_DAY_TREND, HOURLY_COMPLAINTS, INITIAL_OUTAGES } from "@/lib/data";
 import { downloadExecutivePdf } from "@/lib/pdf";
-import { Download, FileText, TrendingUp, CheckCircle, Clock } from "lucide-react";
+import {
+  Download,
+  FileText,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  Send,
+  Bell,
+  MessageSquare,
+  Users,
+  ShieldCheck,
+  AlertTriangle,
+  Radio,
+  CheckCircle2,
+  Sparkles,
+  Award,
+  DollarSign,
+  Layers
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AnalyticsView() {
+  const { user, isCxLead, isLeadership } = useAuth();
   const [hoveredScorePoint, setHoveredScorePoint] = useState<number | null>(3);
   const [downloading, setDownloading] = useState(false);
   const [topFive, setTopFive] = useState<OutageItem[]>(INITIAL_OUTAGES.slice(0, 5));
@@ -19,6 +39,13 @@ export default function AnalyticsView() {
     slaCompliance: "84%",
     period: "Week of Jul 17 – Jul 23, 2026",
   });
+
+  // CX Proactive Comms state
+  const [selectedChannel, setSelectedChannel] = useState<"sms" | "push" | "ivr" | "app">("sms");
+  const [broadcastMessage, setBroadcastMessage] = useState(
+    "⚠️ Outage Alert: We are aware of service disruption affecting Mumbai & Delhi circles. Core field teams are dispatched. Estimated resolution within 2h. We apologize for the inconvenience."
+  );
+  const [dispatchStatus, setDispatchStatus] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOutages().then((data) => {
@@ -101,8 +128,111 @@ export default function AnalyticsView() {
     setDownloading(false);
   };
 
+  const handleDispatchBroadcast = () => {
+    setDispatchStatus("🚀 Dispatching priority broadcast to 161,000 affected subscribers...");
+    setTimeout(() => {
+      setDispatchStatus("✅ Broadcast Successfully Sent across Telecom Channels (SMS / Push / App Banner)!");
+      setTimeout(() => setDispatchStatus(null), 5000);
+    }, 1200);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {dispatchStatus && (
+        <div className="bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between text-xs font-semibold animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{dispatchStatus}</span>
+          </div>
+          <button onClick={() => setDispatchStatus(null)} className="text-white/80 hover:text-white cursor-pointer">✕</button>
+        </div>
+      )}
+
+      {/* Farah CX Role-Specific Proactive Communication Hub */}
+      {isCxLead && (
+        <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-3xl p-6 shadow-xl space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-emerald-500/20">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1 rounded bg-emerald-500/20 text-emerald-300">
+                  <Radio className="w-4 h-4" />
+                </span>
+                <h2 className="text-lg font-bold text-white tracking-tight">
+                  Proactive Customer Communications &amp; Sentiment Protection
+                </h2>
+              </div>
+              <p className="text-xs text-emerald-200/80 mt-0.5">
+                Dispatch immediate broadcast alerts to 161.0k impacted subscribers to mitigate complaint volume and protect NPS.
+              </p>
+            </div>
+            <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 self-start sm:self-auto">
+              Farah C. — CX Lead Command
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Channel Selector */}
+            <div className="space-y-3">
+              <label className="text-xs font-semibold text-gray-300 block">
+                Broadcast Distribution Channel
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "sms", name: "SMS Gateway", count: "161k subscribers" },
+                  { id: "push", name: "App Push", count: "98k active app users" },
+                  { id: "ivr", name: "Call Center IVR", count: "Auto-Deflection" },
+                  { id: "app", name: "Web Banner", count: "Self-service portal" },
+                ].map((ch) => (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => setSelectedChannel(ch.id as any)}
+                    className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
+                      selectedChannel === ch.id
+                        ? "bg-emerald-500/25 text-white border-emerald-400 shadow-md ring-1 ring-emerald-400/40"
+                        : "bg-[#181138] text-gray-300 border-[#2D215E] hover:border-emerald-500/40"
+                    }`}
+                  >
+                    <div className="text-xs font-bold">{ch.name}</div>
+                    <div className="text-[10px] text-emerald-300 font-mono mt-0.5">{ch.count}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Broadcast Message Editor */}
+            <div className="lg:col-span-2 space-y-3">
+              <label className="text-xs font-semibold text-gray-300 flex items-center justify-between">
+                <span>Customer Broadcast Message</span>
+                <span className="text-[10px] font-mono text-emerald-300">
+                  {broadcastMessage.length} chars
+                </span>
+              </label>
+              <textarea
+                rows={3}
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                className="w-full bg-[#181138] border border-[#2D215E] text-white text-xs rounded-xl p-3 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 font-sans"
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] text-gray-400">
+                  Estimated Complaint Reduction: <strong className="text-emerald-300 font-mono">~35% call volume deflection</strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={handleDispatchBroadcast}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-md shadow-emerald-900/40 flex items-center gap-2 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Dispatch Proactive Alert</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 2x2 Grid of Analytics Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Card 1: 7-Day Outage Volume Trend */}
@@ -388,22 +518,27 @@ export default function AnalyticsView() {
         </div>
       </div>
 
-      {/* Bottom Section: Executive Summary */}
+      {/* Bottom Section: Executive Summary (Highlights for Vikram & Leadership) */}
       <div className="bg-[#6B21A8] text-white rounded-2xl p-6 shadow-xl space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-purple-400/30 pb-4">
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">Executive Summary</h2>
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-amber-300" />
+              <h2 className="text-lg font-bold text-white tracking-tight">Executive Summary &amp; Business KPIs</h2>
+            </div>
             <p className="text-xs text-purple-200 font-medium mt-0.5">{execKpis.period}</p>
           </div>
 
-          <button
-            onClick={handleExportPdf}
-            className="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto shadow-xs"
-          >
-            <Download className={`w-3.5 h-3.5 ${downloading ? "animate-bounce" : ""}`} />
-            <span>Export PDF</span>
-          </button>
+          {isLeadership && (
+            <button
+              onClick={handleExportPdf}
+              className="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto shadow-xs"
+            >
+              <Download className={`w-3.5 h-3.5 ${downloading ? "animate-bounce" : ""}`} />
+              <span>Export PDF Briefing</span>
+            </button>
+          )}
         </div>
 
         {/* 4 Exec KPI Cards */}

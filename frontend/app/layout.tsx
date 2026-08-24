@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   authors: [{ name: "The NOC Squad - Bhawana Kumari & Karan Devgan" }],
 };
 
+import { AuthProvider } from "@/context/AuthContext";
+import { FilterProvider } from "@/context/FilterContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +33,9 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} dark scroll-smooth`}
     >
       <body className="min-h-screen flex flex-col bg-gray-950 text-gray-100 antialiased selection:bg-blue-600 selection:text-white">
-        {children}
+        <AuthProvider>
+          <FilterProvider>{children}</FilterProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,26 +1,78 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { REGIONS_DATA, RegionMetric } from "@/lib/data";
 import { fetchRegions } from "@/lib/api";
 import Link from "next/link";
-import { Users, TrendingUp, ShieldCheck, ArrowRight, Filter } from "lucide-react";
+import { ArrowRight, Filter, Globe, MapPin, Shield } from "lucide-react";
+import { useFilter } from "@/context/FilterContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RegionsView() {
+  const { user, isRegionalOps } = useAuth();
+  const { selectedRegion, setSelectedRegion } = useFilter();
   const [regions, setRegions] = useState<RegionMetric[]>(REGIONS_DATA);
-  const [selectedRegion, setSelectedRegion] = useState<RegionMetric>(REGIONS_DATA[0]);
+  const [manualSelectedRegion, setManualSelectedRegion] = useState<RegionMetric | null>(null);
 
   useEffect(() => {
-    fetchRegions().then((data) => {
-      if (data && data.length > 0) {
-        setRegions(data);
-        setSelectedRegion(data[0]);
-      }
-    });
+    let isMounted = true;
+    fetchRegions()
+      .then((data) => {
+        if (isMounted && data && data.length > 0) {
+          setRegions(data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const selectedRegionMetric = useMemo(() => {
+    if (manualSelectedRegion) {
+      return manualSelectedRegion;
+    }
+    if (selectedRegion && selectedRegion !== "ALL") {
+      const match = regions.find(
+        (r) => r.name.toLowerCase() === selectedRegion.toLowerCase() || r.id.toLowerCase() === selectedRegion.toLowerCase()
+      );
+      if (match) return match;
+    }
+    return regions[0] || REGIONS_DATA[0];
+  }, [manualSelectedRegion, selectedRegion, regions]);
+
+  const handleSelectRegion = (reg: RegionMetric) => {
+    setManualSelectedRegion(reg);
+    setSelectedRegion(reg.name);
+  };
 
   return (
     <div className="space-y-6">
+      {/* Regional Ops Manager Command Banner for Priya */}
+      {isRegionalOps && (
+        <div className="bg-blue-950/80 border border-blue-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-blue-100 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-md">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white">Regional Geo-Operations Command</span>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                  Circle SLA &amp; Density Management
+                </span>
+              </div>
+              <p className="text-xs text-blue-300/90 mt-0.5">
+                Monitoring 9 geographic operating circles. Drill down into subscriber reach, regional SLA breach countdowns, and revenue tiers.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 self-start sm:self-auto shrink-0">
+            <MapPin className="w-3.5 h-3.5 text-blue-400" />
+            <span>Circle: {selectedRegionMetric.name} Active</span>
+          </div>
+        </div>
+      )}
       
       {/* Top Grid: Left Region Impact Ranking (6 cols) & Right Impact Score Chart (6 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -37,22 +89,23 @@ export default function RegionsView() {
               </p>
             </div>
             <Link
-              href={`/queue?region=${encodeURIComponent(selectedRegion.name)}`}
+              href={`/queue?region=${encodeURIComponent(selectedRegionMetric.name)}`}
+              onClick={() => setSelectedRegion(selectedRegionMetric.name)}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl border border-purple-200/80 transition-colors"
             >
               <Filter className="w-3.5 h-3.5" />
-              <span>Filter Queue by {selectedRegion.name}</span>
+              <span>Filter Queue by {selectedRegionMetric.name}</span>
             </Link>
           </div>
 
           {/* List */}
           <div className="space-y-2.5 pt-1">
             {regions.map((region, idx) => {
-              const isSelected = selectedRegion.id === region.id;
+              const isSelected = selectedRegionMetric.id === region.id;
               return (
                 <div
                   key={region.id}
-                  onClick={() => setSelectedRegion(region)}
+                  onClick={() => handleSelectRegion(region)}
                   className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                     isSelected
                       ? "bg-purple-50/80 border-purple-300 shadow-xs ring-1 ring-purple-200"
@@ -134,7 +187,7 @@ export default function RegionsView() {
               {regions.map((reg, i) => {
                 const y = 15 + i * 24;
                 const barWidth = (reg.impactScore / 100) * 400;
-                const isSelected = selectedRegion.id === reg.id;
+                const isSelected = selectedRegionMetric.id === reg.id;
                 const color =
                   reg.impactScore >= 85
                     ? "#E53E3E"
@@ -147,7 +200,7 @@ export default function RegionsView() {
                     : "#38A169";
 
                 return (
-                  <g key={reg.id} className="cursor-pointer group" onClick={() => setSelectedRegion(reg)}>
+                  <g key={reg.id} className="cursor-pointer group" onClick={() => handleSelectRegion(reg)}>
                     <text
                       x="80"
                       y={y + 11}
@@ -176,13 +229,14 @@ export default function RegionsView() {
           {/* Interactive Selected Region Action Bar */}
           <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs text-gray-700 font-medium">
-              Selected: <strong className="text-purple-700">{selectedRegion.name}</strong> • Exposure: <strong className="text-gray-900">{selectedRegion.revenueExposureHourly}</strong> • SLA: <strong className="text-emerald-700">{selectedRegion.slaCompliance}%</strong>
+              Selected: <strong className="text-purple-700">{selectedRegionMetric.name}</strong> • Exposure: <strong className="text-gray-900">{selectedRegionMetric.revenueExposureHourly}</strong> • SLA: <strong className="text-emerald-700">{selectedRegionMetric.slaCompliance}%</strong>
             </div>
             <Link
-              href={`/queue?region=${encodeURIComponent(selectedRegion.name)}`}
+              href={`/queue?region=${encodeURIComponent(selectedRegionMetric.name)}`}
+              onClick={() => setSelectedRegion(selectedRegionMetric.name)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0"
             >
-              <span>Filter Queue by {selectedRegion.name}</span>
+              <span>Filter Queue by {selectedRegionMetric.name}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -195,9 +249,9 @@ export default function RegionsView() {
         {regions.slice(0, 4).map((region) => (
           <div
             key={region.id}
-            onClick={() => setSelectedRegion(region)}
+            onClick={() => handleSelectRegion(region)}
             className={`bg-white border rounded-2xl p-4 shadow-xs transition-all cursor-pointer ${
-              selectedRegion.id === region.id
+              selectedRegionMetric.id === region.id
                 ? "border-purple-400 ring-2 ring-purple-100 bg-purple-50/20"
                 : "border-gray-200/80 hover:border-purple-200"
             }`}
@@ -223,6 +277,7 @@ export default function RegionsView() {
               <span className="text-gray-500">Outages: <strong className="text-gray-900">{region.activeOutages}</strong></span>
               <Link
                 href={`/queue?region=${encodeURIComponent(region.name)}`}
+                onClick={() => setSelectedRegion(region.name)}
                 className="text-purple-600 font-bold hover:text-purple-800 hover:underline flex items-center gap-1 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-lg border border-purple-200/60 transition-colors shrink-0"
               >
                 <span>Filter Queue by {region.name}</span>
