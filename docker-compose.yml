@@ -1,0 +1,33 @@
+services:
+  outageiq:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: outageiq:latest
+    container_name: outageiq-single-server
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - DB_PATH=/app/backend/data/outageiq.db
+      - OUTAGE_DATA_PATH=/app/backend/data/raw/outage_alerts.csv
+      - COMPLAINT_DATA_PATH=/app/backend/data/raw/complaint_logs.csv
+      - USAGE_DATA_PATH=/app/backend/data/raw/region_usage_metrics.csv
+      - PROCESSED_DATA_PATH=/app/backend/data/processed
+      - REPORT_OUTPUT_PATH=/app/backend/output
+      - IMPACT_WEIGHT_REACH=0.35
+      - IMPACT_WEIGHT_COMPLAINTS=0.30
+      - IMPACT_WEIGHT_REVENUE=0.20
+      - IMPACT_WEIGHT_DURATION=0.15
+      - SLA_CRITICAL_HOURS=2.0
+      - SLA_HIGH_HOURS=4.0
+      - SLA_MEDIUM_HOURS=8.0
+      - SLA_LOW_HOURS=24.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

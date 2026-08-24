@@ -310,3 +310,57 @@ sqlite3 backend/data/outageiq.db "SELECT name, subscribers_formatted, revenue_ti
   rm -f backend/data/outageiq.db
   python3 server.py
   ```
+
+---
+
+## 8. Docker Multi-Stage Deployment & CI/CD
+
+### 8.1 Multi-Stage Docker Build Architecture
+OutageIQ packages both the Next.js static UI export and the Python single server engine into a self-contained production container image.
+
+- **Stage 1 (`frontend-builder`)**: Uses `node:20-alpine` to compile Next.js static export files to `frontend/out`.
+- **Stage 2 (`runner`)**: Uses `python:3.11-slim` with system utilities (`curl`, `sqlite3`), installs dependencies, copies backend scripts & SQLite telemetry databases, and serves the static UI and REST endpoints on port `8000`.
+
+### 8.2 Building & Running via Docker Locally
+```bash
+# Build the Docker image
+docker build -t outageiq:latest .
+
+# Run the container
+docker run -d -p 8000:8000 --name outageiq outageiq:latest
+
+# Check health endpoint
+curl http://localhost:8000/api/health
+```
+
+### 8.3 Using Docker Compose
+```bash
+# Start container
+docker compose up -d
+
+# Stop container
+docker compose down
+```
+
+### 8.4 Automated Tag-Driven CI/CD Deployment (`deploy.yml`)
+The workflow `.github/workflows/deploy.yml` triggers exclusively when a tag matching `v*` (e.g. `v1.0.0`) is pushed to GitHub:
+
+1. Builds the multi-stage Docker container.
+2. Pushes image to Docker Hub tagged with both the version tag (e.g. `user/outageiq:v1.0.0`) and `latest`.
+3. Triggers automated deployment on **Render** to deploy the `v*` tagged image.
+
+#### Required GitHub Secrets:
+| Secret Name | Description |
+| :--- | :--- |
+| `DOCKERHUB_USERNAME` | Docker Hub username or organization |
+| `DOCKERHUB_TOKEN` | Docker Hub Personal Access Token |
+| `RENDER_DEPLOY_HOOK_URL` | Render Service Deploy Hook URL (or `RENDER_API_KEY` + `RENDER_SERVICE_ID`) |
+| `RENDER_API_KEY` *(Optional)* | Render API Key for direct REST API deployment |
+| `RENDER_SERVICE_ID` *(Optional)* | Render Web Service ID |
+
+#### Triggering a Release Deployment:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
