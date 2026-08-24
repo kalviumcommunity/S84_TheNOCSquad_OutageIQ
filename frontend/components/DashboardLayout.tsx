@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { PERSONAS, PersonaInfo } from "@/lib/data";
 import { Menu, X } from "lucide-react";
+import { useFilter } from "@/context/FilterContext";
+import { PERSONAS } from "@/lib/data";
 
 interface DashboardLayoutProps {
   title: string;
@@ -21,24 +22,22 @@ export default function DashboardLayout({
   onRefreshData
 }: DashboardLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedPersona, setSelectedPersona] = useState<PersonaInfo>(PERSONAS[0]);
-  const [selectedRegion, setSelectedRegion] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState({
-    open: true,
-    inProgress: true,
-    resolved: false
-  });
+  const filterContext = useFilter();
+
+  const selectedPersona = filterContext.selectedPersona ?? PERSONAS[0];
+  const setSelectedPersona = filterContext.setSelectedPersona;
+  const refreshOutages = filterContext.refreshOutages;
+
+  const handleRefresh = async () => {
+    if (onRefreshData) onRefreshData();
+    if (refreshOutages) await refreshOutages();
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] text-gray-900 flex font-sans antialiased selection:bg-purple-600 selection:text-white">
       {/* Desktop Left Sidebar */}
       <div className="hidden md:block">
-        <Sidebar
-          selectedRegion={selectedRegion}
-          onRegionChange={setSelectedRegion}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-        />
+        <Sidebar />
       </div>
 
       {/* Mobile Drawer Overlay */}
@@ -60,20 +59,12 @@ export default function DashboardLayout({
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1 rounded-lg text-gray-400 hover:text-white"
+                className="p-1 rounded-lg text-gray-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <Sidebar
-              selectedRegion={selectedRegion}
-              onRegionChange={(r) => {
-                setSelectedRegion(r);
-                setMobileMenuOpen(false);
-              }}
-              statusFilter={statusFilter}
-              onStatusChange={setStatusFilter}
-            />
+            <Sidebar />
           </div>
         </div>
       )}
@@ -85,16 +76,18 @@ export default function DashboardLayout({
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-1.5 rounded-lg bg-[#1F173D] text-gray-300 hover:text-white"
+              className="p-1.5 rounded-lg bg-[#1F173D] text-gray-300 hover:text-white cursor-pointer"
               aria-label="Toggle Dashboard Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div className="font-bold text-sm">OutageIQ NOC</div>
           </div>
-          <div className="w-7 h-7 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center">
-            {selectedPersona.initials}
-          </div>
+          {selectedPersona && (
+            <div className="w-7 h-7 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center">
+              {selectedPersona.initials}
+            </div>
+          )}
         </div>
 
         {/* Inner Content with Header and Pages */}
@@ -104,7 +97,7 @@ export default function DashboardLayout({
             subtitle={subtitle}
             selectedPersona={selectedPersona}
             onSelectPersona={setSelectedPersona}
-            onRefresh={onRefreshData}
+            onRefresh={handleRefresh}
           />
           {children}
         </main>

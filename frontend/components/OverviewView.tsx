@@ -3,45 +3,61 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
-  ArrowUpRight,
-  TrendingUp,
-  Clock,
-  DollarSign,
-  Users,
-  ShieldAlert,
-  BarChart3,
-  ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Filter,
+  RotateCcw
 } from "lucide-react";
 import { INITIAL_OUTAGES, OutageItem, HOURLY_COMPLAINTS, SEVEN_DAY_TREND } from "@/lib/data";
-import { fetchOutages } from "@/lib/api";
+import { useFilter } from "@/context/FilterContext";
 
 export default function OverviewView() {
-  const [outages, setOutages] = useState<OutageItem[]>(INITIAL_OUTAGES);
-  const [selectedOutage, setSelectedOutage] = useState<OutageItem>(INITIAL_OUTAGES[0]);
+  const {
+    sortedOutages,
+    hasActiveFilters,
+    resetFilters,
+    selectedRegion,
+    selectedPriority,
+    statusFilter
+  } = useFilter();
+
+  const [selectedOutage, setSelectedOutage] = useState<OutageItem>(
+    sortedOutages[0] || INITIAL_OUTAGES[0]
+  );
   const [alertDismissed, setAlertDismissed] = useState(false);
-  const [hoveredTrendDay, setHoveredTrendDay] = useState<typeof SEVEN_DAY_TREND[0] | null>(null);
 
   useEffect(() => {
-    fetchOutages().then((data) => {
-      if (data && data.length > 0) {
-        setOutages(data);
-        setSelectedOutage(data[0]);
+    if (sortedOutages.length > 0) {
+      const exists = sortedOutages.some((o) => o.id === selectedOutage?.id);
+      if (!exists) {
+        setSelectedOutage(sortedOutages[0]);
       }
-    });
-  }, []);
+    }
+  }, [sortedOutages, selectedOutage?.id]);
 
-  const topOutages = outages.slice(0, 6);
+  const topOutages = sortedOutages.slice(0, 6);
+  const currentOutage = selectedOutage || topOutages[0] || INITIAL_OUTAGES[0];
 
   // SVG Gauge calculations
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (selectedOutage.impactScore / 100) * circumference;
+  const strokeDashoffset = circumference - ((currentOutage?.impactScore || 50) / 100) * circumference;
+
+  // Dynamic KPI counts based on active filtered dataset
+  const activeCount = sortedOutages.length;
+  const criticalCount = sortedOutages.filter(
+    (o) => o.priority === "P1" || o.severity === "Critical" || o.impactScore >= 75
+  ).length;
+  const totalSubscribers = sortedOutages.reduce((sum, o) => sum + (o.subscribers || 0), 0);
+  const formattedSubscribers =
+    totalSubscribers >= 1000000
+      ? `${(totalSubscribers / 1000000).toFixed(2)}M`
+      : totalSubscribers > 0
+      ? `${(totalSubscribers / 1000).toFixed(1)}k`
+      : "0";
 
   return (
     <div className="space-y-6">
-      {/* 1. Critical Alert Banner (Figma UI matching) */}
+      {/* 1. Critical Alert Banner */}
       {!alertDismissed && (
         <div className="bg-[#FFF5F5] border border-[#FED7D7] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
@@ -62,18 +78,53 @@ export default function OverviewView() {
         </div>
       )}
 
-      {/* 2. Top 5 KPI Cards Row (Figma UI matching) */}
+      {/* Active Filter Notice if filters are engaged */}
+      {hasActiveFilters && (
+        <div className="bg-purple-50/90 border border-purple-200 rounded-xl p-3 px-4 flex items-center justify-between text-xs text-purple-900 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+            <span>
+              Showing overview for active filters:{" "}
+              {selectedRegion !== "ALL" && (
+                <strong className="bg-white border border-purple-200 px-1.5 py-0.5 rounded text-purple-950 mr-1.5">
+                  Region: {selectedRegion}
+                </strong>
+              )}
+              {selectedPriority !== "ALL" && (
+                <strong className="bg-white border border-purple-200 px-1.5 py-0.5 rounded text-purple-950 mr-1.5">
+                  Priority: {selectedPriority}
+                </strong>
+              )}
+              {(!statusFilter.open || !statusFilter.inProgress || !statusFilter.resolved) && (
+                <strong className="bg-white border border-purple-200 px-1.5 py-0.5 rounded text-purple-950 mr-1.5">
+                  Status filtered
+                </strong>
+              )}
+              ({sortedOutages.length} matching)
+            </span>
+          </div>
+          <button
+            onClick={resetFilters}
+            className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 hover:text-purple-900 bg-white hover:bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg shadow-2xs transition-colors cursor-pointer shrink-0"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset Filters</span>
+          </button>
+        </div>
+      )}
+
+      {/* 2. Top 5 KPI Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* KPI 1 */}
         <div className="bg-white border border-gray-200/80 rounded-2xl p-4 shadow-xs hover:border-purple-200 transition-colors">
           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 font-mono">
-            ACTIVE OUTAGES
+            MATCHING OUTAGES
           </span>
           <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1">
-            24
+            {activeCount}
           </div>
           <div className="text-[11px] text-gray-500 mt-1 flex items-center gap-1 font-medium">
-            <span className="text-emerald-600 font-semibold">↑ 6</span> from yesterday
+            <span className="text-emerald-600 font-semibold">Live</span> monitored signal
           </div>
         </div>
 
@@ -83,7 +134,7 @@ export default function OverviewView() {
             CRITICAL
           </span>
           <div className="text-2xl sm:text-3xl font-extrabold text-rose-600 mt-1">
-            5
+            {criticalCount}
           </div>
           <div className="text-[11px] text-rose-600/90 mt-1 font-medium">
             Requires P1 action
@@ -96,10 +147,10 @@ export default function OverviewView() {
             CUSTOMERS IMPACTED
           </span>
           <div className="text-2xl sm:text-3xl font-extrabold text-purple-600 mt-1">
-            2.48M
+            {formattedSubscribers}
           </div>
           <div className="text-[11px] text-gray-500 mt-1 font-medium">
-            Across 8 regions
+            {selectedRegion === "ALL" ? "Across all circles" : `In ${selectedRegion}`}
           </div>
         </div>
 
@@ -142,131 +193,137 @@ export default function OverviewView() {
                   Prioritized Outage Queue
                 </h2>
                 <p className="text-xs text-gray-500 font-medium mt-0.5">
-                  Ranked by Impact Score — highest first
+                  Ranked by Impact Score — highest first ({topOutages.length} shown)
                 </p>
               </div>
               <Link
                 href="/queue"
                 className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1 transition-colors"
               >
-                <span>View all</span>
+                <span>View all in Queue</span>
                 <span>→</span>
               </Link>
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100 text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
-                    <th className="pb-3 font-semibold">Outage ID</th>
-                    <th className="pb-3 font-semibold">Region</th>
-                    <th className="pb-3 font-semibold">Severity</th>
-                    <th className="pb-3 font-semibold">Impact</th>
-                    <th className="pb-3 font-semibold">Status</th>
-                    <th className="pb-3 font-semibold">Complaints</th>
-                    <th className="pb-3 font-semibold">Priority</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {topOutages.map((outage) => {
-                    const isSelected = selectedOutage.id === outage.id;
-                    return (
-                      <tr
-                        key={outage.id}
-                        onClick={() => setSelectedOutage(outage)}
-                        className={`cursor-pointer transition-colors ${
-                          isSelected ? "bg-purple-50/70" : "hover:bg-gray-50/80"
-                        }`}
-                      >
-                        {/* Outage ID */}
-                        <td className="py-3 font-mono font-bold text-purple-600">
-                          {outage.shortId}
-                        </td>
+            {topOutages.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
+                      <th className="pb-3 font-semibold">Outage ID</th>
+                      <th className="pb-3 font-semibold">Region</th>
+                      <th className="pb-3 font-semibold">Severity</th>
+                      <th className="pb-3 font-semibold">Impact</th>
+                      <th className="pb-3 font-semibold">Status</th>
+                      <th className="pb-3 font-semibold">Complaints</th>
+                      <th className="pb-3 font-semibold">Priority</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {topOutages.map((outage) => {
+                      const isSelected = currentOutage?.id === outage.id;
+                      return (
+                        <tr
+                          key={outage.id}
+                          onClick={() => setSelectedOutage(outage)}
+                          className={`cursor-pointer transition-colors ${
+                            isSelected ? "bg-purple-50/70" : "hover:bg-gray-50/80"
+                          }`}
+                        >
+                          {/* Outage ID */}
+                          <td className="py-3 font-mono font-bold text-purple-600">
+                            {outage.shortId}
+                          </td>
 
-                        {/* Region */}
-                        <td className="py-3 font-semibold text-gray-800">
-                          {outage.region}
-                        </td>
+                          {/* Region */}
+                          <td className="py-3 font-semibold text-gray-800">
+                            {outage.region}
+                          </td>
 
-                        {/* Severity */}
-                        <td className="py-3">
-                          <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                              outage.severity === "Critical"
-                                ? "bg-rose-100 text-rose-700"
-                                : outage.severity === "High"
-                                ? "bg-amber-100 text-amber-700"
-                                : outage.severity === "Medium"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}
-                          >
-                            {outage.severity}
-                          </span>
-                        </td>
-
-                        {/* Impact Progress Bar & Score */}
-                        <td className="py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${
-                                  outage.impactScore >= 75
-                                    ? "bg-rose-500"
-                                    : outage.impactScore >= 50
-                                    ? "bg-amber-500"
-                                    : "bg-emerald-500"
-                                }`}
-                                style={{ width: `${outage.impactScore}%` }}
-                              />
-                            </div>
-                            <span className="font-bold text-gray-900 font-mono">
-                              {outage.impactScore}
+                          {/* Severity */}
+                          <td className="py-3">
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                outage.severity === "Critical"
+                                  ? "bg-rose-100 text-rose-700"
+                                  : outage.severity === "High"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : outage.severity === "Medium"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-emerald-100 text-emerald-700"
+                              }`}
+                            >
+                              {outage.severity}
                             </span>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Status Badge */}
-                        <td className="py-3">
-                          <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
-                              outage.status === "Open"
-                                ? "bg-rose-50 text-rose-600 border border-rose-100"
-                                : outage.status === "In Progress"
-                                ? "bg-blue-50 text-blue-600 border border-blue-100"
-                                : "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                            }`}
-                          >
-                            {outage.status}
-                          </span>
-                        </td>
+                          {/* Impact Progress Bar & Score */}
+                          <td className="py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    outage.impactScore >= 75
+                                      ? "bg-rose-500"
+                                      : outage.impactScore >= 50
+                                      ? "bg-amber-500"
+                                      : "bg-emerald-500"
+                                  }`}
+                                  style={{ width: `${outage.impactScore}%` }}
+                                />
+                              </div>
+                              <span className="font-bold text-gray-900 font-mono">
+                                {outage.impactScore}
+                              </span>
+                            </div>
+                          </td>
 
-                        {/* Complaints */}
-                        <td className="py-3 text-gray-600 font-mono">
-                          {outage.complaints.toLocaleString()}
-                        </td>
+                          {/* Status Badge */}
+                          <td className="py-3">
+                            <span
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                                outage.status === "Open"
+                                  ? "bg-rose-50 text-rose-600 border border-rose-100"
+                                  : outage.status === "In Progress" || outage.status === "Active Triage"
+                                  ? "bg-blue-50 text-blue-600 border border-blue-100"
+                                  : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                              }`}
+                            >
+                              {outage.status}
+                            </span>
+                          </td>
 
-                        {/* Priority Pill */}
-                        <td className="py-3">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold text-white ${
-                              outage.priority === "P1"
-                                ? "bg-rose-500"
-                                : outage.priority === "P2"
-                                ? "bg-amber-500"
-                                : "bg-gray-400"
-                            }`}
-                          >
-                            {outage.priority}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {/* Complaints */}
+                          <td className="py-3 text-gray-600 font-mono">
+                            {outage.complaints.toLocaleString()}
+                          </td>
+
+                          {/* Priority Pill */}
+                          <td className="py-3">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold text-white ${
+                                outage.priority === "P1"
+                                  ? "bg-rose-500"
+                                  : outage.priority === "P2"
+                                  ? "bg-amber-500"
+                                  : "bg-gray-400"
+                              }`}
+                            >
+                              {outage.priority}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-gray-500">
+                No active outages match current filter criteria.
+              </div>
+            )}
           </div>
         </div>
 
@@ -274,118 +331,120 @@ export default function OverviewView() {
         <div className="lg:col-span-4 space-y-6">
           
           {/* Card 1: IMPACT SCORE */}
-          <div className="bg-white border border-gray-200/80 rounded-2xl p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">
-                  IMPACT SCORE
-                </span>
-                <div className="text-xs font-mono font-bold text-gray-900 mt-0.5">
-                  {selectedOutage.id}
+          {currentOutage ? (
+            <div className="bg-white border border-gray-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">
+                    IMPACT SCORE
+                  </span>
+                  <div className="text-xs font-mono font-bold text-gray-900 mt-0.5">
+                    {currentOutage.id}
+                  </div>
                 </div>
-              </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200 font-mono">
-                {selectedOutage.severity} · {selectedOutage.priority}
-              </span>
-            </div>
-
-            {/* Circular Gauge */}
-            <div className="flex flex-col items-center justify-center py-2 relative">
-              <svg className="w-32 h-32 transform -rotate-90">
-                <circle
-                  cx="64"
-                  cy="64"
-                  r={radius}
-                  stroke="#F3F4F6"
-                  strokeWidth="8"
-                  fill="transparent"
-                />
-                <circle
-                  cx="64"
-                  cy="64"
-                  r={radius}
-                  stroke={selectedOutage.impactScore >= 75 ? "#E53E3E" : selectedOutage.impactScore >= 50 ? "#DD6B20" : "#38A169"}
-                  strokeWidth="8"
-                  fill="transparent"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  className="transition-all duration-700 ease-out"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-2xl font-black text-gray-900 font-mono">
-                  {selectedOutage.impactScore}
-                </span>
-                <span className="text-[10px] font-bold text-gray-400 font-mono">
-                  /100
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200 font-mono">
+                  {currentOutage.severity} · {currentOutage.priority}
                 </span>
               </div>
+
+              {/* Circular Gauge */}
+              <div className="flex flex-col items-center justify-center py-2 relative">
+                <svg className="w-32 h-32 transform -rotate-90">
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r={radius}
+                    stroke="#F3F4F6"
+                    strokeWidth="8"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r={radius}
+                    stroke={currentOutage.impactScore >= 75 ? "#E53E3E" : currentOutage.impactScore >= 50 ? "#DD6B20" : "#38A169"}
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-700 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-black text-gray-900 font-mono">
+                    {currentOutage.impactScore}
+                  </span>
+                  <span className="text-[10px] font-bold text-gray-400 font-mono">
+                    /100
+                  </span>
+                </div>
+              </div>
+
+              {/* Sub-score Breakdown Bars */}
+              <div className="space-y-2 pt-1 border-t border-gray-100">
+                {/* Customer Reach */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-medium text-gray-700">
+                    <span>Customer Reach</span>
+                    <span className="font-mono font-bold">{currentOutage.subscores?.reach || 60}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
+                    <div
+                      className="bg-rose-500 h-full rounded-full"
+                      style={{ width: `${currentOutage.subscores?.reach || 60}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Complaint Pressure */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-medium text-gray-700">
+                    <span>Complaint Pressure</span>
+                    <span className="font-mono font-bold">{currentOutage.subscores?.complaints || 60}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
+                    <div
+                      className="bg-rose-500 h-full rounded-full"
+                      style={{ width: `${currentOutage.subscores?.complaints || 60}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Revenue Exposure */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-medium text-gray-700">
+                    <span>Revenue Exposure</span>
+                    <span className="font-mono font-bold">{currentOutage.subscores?.revenue || 60}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
+                    <div
+                      className="bg-rose-500 h-full rounded-full"
+                      style={{ width: `${currentOutage.subscores?.revenue || 60}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Duration & Severity */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-medium text-gray-700">
+                    <span>Duration &amp; Severity</span>
+                    <span className="font-mono font-bold">{currentOutage.subscores?.duration || 60}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
+                    <div
+                      className="bg-amber-500 h-full rounded-full"
+                      style={{ width: `${currentOutage.subscores?.duration || 60}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-gray-400 text-center font-medium">
+                Weight breakdown: Reach 35% · Complaints 30% · Revenue 20% · Duration 15%
+              </p>
             </div>
-
-            {/* Sub-score Breakdown Bars */}
-            <div className="space-y-2 pt-1 border-t border-gray-100">
-              {/* Customer Reach */}
-              <div>
-                <div className="flex justify-between text-[11px] font-medium text-gray-700">
-                  <span>Customer Reach</span>
-                  <span className="font-mono font-bold">{selectedOutage.subscores.reach}</span>
-                </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="bg-rose-500 h-full rounded-full"
-                    style={{ width: `${selectedOutage.subscores.reach}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Complaint Pressure */}
-              <div>
-                <div className="flex justify-between text-[11px] font-medium text-gray-700">
-                  <span>Complaint Pressure</span>
-                  <span className="font-mono font-bold">{selectedOutage.subscores.complaints}</span>
-                </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="bg-rose-500 h-full rounded-full"
-                    style={{ width: `${selectedOutage.subscores.complaints}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Revenue Exposure */}
-              <div>
-                <div className="flex justify-between text-[11px] font-medium text-gray-700">
-                  <span>Revenue Exposure</span>
-                  <span className="font-mono font-bold">{selectedOutage.subscores.revenue}</span>
-                </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="bg-rose-500 h-full rounded-full"
-                    style={{ width: `${selectedOutage.subscores.revenue}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Duration & Severity */}
-              <div>
-                <div className="flex justify-between text-[11px] font-medium text-gray-700">
-                  <span>Duration &amp; Severity</span>
-                  <span className="font-mono font-bold">{selectedOutage.subscores.duration}</span>
-                </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="bg-amber-500 h-full rounded-full"
-                    style={{ width: `${selectedOutage.subscores.duration}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <p className="text-[10px] text-gray-400 text-center font-medium">
-              Weight breakdown: Reach 35% · Complaints 30% · Revenue 20% · Duration 15%
-            </p>
-          </div>
+          ) : null}
 
           {/* Card 2: QUICK STATS */}
           <div className="bg-white border border-gray-200/80 rounded-2xl p-5 shadow-xs space-y-3">
@@ -399,11 +458,17 @@ export default function OverviewView() {
               </div>
               <div className="flex justify-between items-center py-1 border-b border-gray-50">
                 <span className="text-gray-600 font-medium">Avg Impact Score</span>
-                <span className="font-mono font-extrabold text-amber-600">61.3</span>
+                <span className="font-mono font-extrabold text-amber-600">
+                  {sortedOutages.length > 0
+                    ? (
+                        sortedOutages.reduce((acc, o) => acc + o.impactScore, 0) / sortedOutages.length
+                      ).toFixed(1)
+                    : "61.3"}
+                </span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-gray-50">
                 <span className="text-gray-600 font-medium">P1 Outages Open</span>
-                <span className="font-mono font-extrabold text-rose-600">2</span>
+                <span className="font-mono font-extrabold text-rose-600">{criticalCount}</span>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="text-gray-600 font-medium">Complaints / Hour</span>
@@ -467,7 +532,7 @@ export default function OverviewView() {
                   <g key={d.date}>
                     <circle cx={x} cy={120 - d.avgImpact * 1.2} r="3.5" fill="#ED8936" className="cursor-pointer hover:r-5 transition-all" />
                     <circle cx={x} cy={120 - d.volume * 1.2} r="3.5" fill="#7C3AED" className="cursor-pointer hover:r-5 transition-all" />
-                    <text x={x} y="118" fontSize="8.5" fill="#9CA3AF" textAnchor="middle">{d.date}</text>
+                    <text x={x} y={118} fontSize="8.5" fill="#9CA3AF" textAnchor="middle">{d.date}</text>
                   </g>
                 );
               })}
