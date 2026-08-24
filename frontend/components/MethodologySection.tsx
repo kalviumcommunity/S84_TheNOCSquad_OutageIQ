@@ -17,7 +17,7 @@ export default function MethodologySection() {
     {
       num: "02",
       title: "Spatio-Temporal Fusion & Join",
-      badge: "PRD SECTION 6",
+      badge: "FUSION ENGINE",
       color: "text-purple-400 border-purple-500/30 bg-purple-500/10",
       desc: "Joins datasets on region_id. Complaints lacking explicit outage tags are dynamically matched to active region outages within a sliding time window.",
       detail: "region_id key • Time-window matching • Partial data confidence flagging"
@@ -25,7 +25,7 @@ export default function MethodologySection() {
     {
       num: "03",
       title: "Min-Max Relative Normalization",
-      badge: "PRD SECTION 7",
+      badge: "SCORING MODEL",
       color: "text-amber-400 border-amber-500/30 bg-amber-500/10",
       desc: "Normalizes each sub-score to a 0–1 scale relative to active network conditions. Prevents static skew and guarantees dynamic adaptation.",
       detail: "0–1 Scaling • Active outage baseline • Config-driven weights"
@@ -33,7 +33,7 @@ export default function MethodologySection() {
     {
       num: "04",
       title: "Weighted Composite Calculation",
-      badge: "FR5 - FR7",
+      badge: "PRIORITY TIERING",
       color: "text-rose-400 border-rose-500/30 bg-rose-500/10",
       desc: "Computes final Impact Score = 0.35·Reach + 0.30·Complaints + 0.20·Revenue + 0.15·Duration. Assigns Priority Tier (Critical, High, Med, Low).",
       detail: "35% Reach • 30% Complaints • 20% Revenue • 15% Duration"
@@ -41,7 +41,7 @@ export default function MethodologySection() {
     {
       num: "05",
       title: "Real-time Queue & Reporting",
-      badge: "FR8 - FR16",
+      badge: "LIVE OPERATIONS",
       color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
       desc: "Instantly surfaces prioritized queue for NOC engineers, threshold alert banners, regional heatmaps, and executive summary reports.",
       detail: "<5s recompute speed • PDF/CSV export • In-app alert banners"
@@ -74,7 +74,7 @@ export default function MethodologySection() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono font-semibold">
-            PRD ARCHITECTURE & METHODOLOGY
+            SYSTEM ARCHITECTURE & METHODOLOGY
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             How OutageIQ Computes Impact
@@ -242,7 +242,7 @@ export default function MethodologySection() {
               </div>
 
               <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400 font-mono">
-                * Ensures customer complaints are accurately attributed to open outages for impact calculation (PRD Section 6).
+                * Ensures customer complaints are accurately attributed to open outages for impact calculation via spatio-temporal sliding window.
               </div>
             </div>
 
@@ -303,7 +303,7 @@ export default function MethodologySection() {
         <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-blue-950/60 via-indigo-950/40 to-purple-950/60 border border-blue-500/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-1 text-center md:text-left">
             <span className="text-xs font-mono font-bold text-blue-400 uppercase tracking-wider">
-              PRD Formula (Section 7)
+              Vectorized Composite Impact Formula
             </span>
             <div className="text-sm sm:text-base font-mono font-bold text-white">
               Impact Score = <span className="text-blue-400">0.35·Reach</span> + <span className="text-amber-400">0.30·Complaints</span> + <span className="text-purple-400">0.20·Revenue</span> + <span className="text-rose-400">0.15·Duration</span>

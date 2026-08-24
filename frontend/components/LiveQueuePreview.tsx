@@ -266,7 +266,7 @@ export default function LiveQueuePreview() {
 
   // Export Executive PDF Summary / Briefing Report (FR14 & Phase 10)
   const handleExportSummaryReport = () => {
-    const reportHeader = `# OutageIQ Executive Incident Briefing (PRD Section 8.3 & FR14)\nGenerated: ${new Date().toUTCString()}\nClassification: TELECOM OPERATIONS CONFIDENTIAL\n\n`;
+    const reportHeader = `# OutageIQ Executive Incident Briefing\nGenerated: ${new Date().toUTCString()}\nClassification: TELECOM OPERATIONS CONFIDENTIAL\n\n`;
     const kpiSummary = `## Executive Operations KPI Summary\n- Total Active Incidents: ${mockOutages.length}\n- Critical Tier P1 Incidents (Score >= 75): ${criticalCount}\n- Total Impacted Customer Base: ${totalSubscribers.toLocaleString()} subscribers\n- Mean Time to Resolve (MTTR): 1.8 hrs\n\n`;
     const outagesHeader = `## Top Prioritized Incidents\n` + displayOutages.map((o, i) => `[#${i + 1}] ${o.id} (${o.region} - ${o.node}) | Impact Score: ${o.score} | Priority: ${o.priority} | Affected: ${o.subscribers.toLocaleString()} subs | Revenue: ${o.revenueExposure} | Root Cause: ${o.rootCause}`).join("\n\n");
     const blob = new Blob([reportHeader + kpiSummary + outagesHeader], { type: "text/markdown;charset=utf-8;" });
@@ -357,19 +357,19 @@ export default function LiveQueuePreview() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-semibold mb-3">
-              PRD SECTION 8.3 DASHBOARD DEMO
+              LIVE TRIAGE QUEUE & ACTION DASHBOARD
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               Prioritized Outage Triage Queue
             </h2>
             <p className="text-gray-400 text-sm mt-1 max-w-2xl">
-              Live preview of the NOC engineer & leadership interface. Click any row to inspect explainable sub-score breakdowns (FR10).
+              Live interface for NOC engineers & leadership. Click any row to inspect explainable sub-score breakdowns.
             </p>
           </div>
 
-          {/* Executive View Toggle (FR15) */}
+          {/* Executive View Toggle */}
           <div className="flex items-center gap-3 bg-gray-900 p-2 rounded-xl border border-gray-800 shrink-0">
-            <span className="text-xs font-semibold text-gray-300">Executive View Toggle (FR15):</span>
+            <span className="text-xs font-semibold text-gray-300">Top 5 Executive View:</span>
             <button
               onClick={() => setExecView(!execView)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${

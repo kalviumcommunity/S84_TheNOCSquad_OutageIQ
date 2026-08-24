@@ -24,23 +24,23 @@ const personas: Persona[] = [
     role: "NOC Engineer",
     avatarBg: "from-blue-600 to-cyan-600",
     icon: "🛠️",
-    quote: "I need to know which of the 15 active network alerts will cause the biggest business impact if I don't assign an field technician right now.",
+    quote: "I need to know which active network alert will cause the biggest business impact if I don't assign a field technician right now.",
     needs: [
       "Ranked queue of active outages ordered strictly by composite Impact Score",
       "Quick filters by region, severity code, and priority tier",
       "Transparent sub-score breakdown so I know WHY an outage scored 94.2"
     ],
     keyFeatures: [
-      "Prioritized Outage Queue (FR9)",
-      "Explainable Detail Panel (FR10)",
-      "Threshold Alert Banners (FR16)"
+      "Prioritized Outage Queue",
+      "Explainable Detail Inspector",
+      "Emergency Alert Banners"
     ],
     mockData: {
       title: "Rahul's Active Triage Queue",
       metrics: [
-        { label: "Top Priority Outage", value: "OUT-8902 (Impact: 94.2)", color: "text-rose-400" },
-        { label: "Active Queue Count", value: "14 Open Events", color: "text-blue-400" },
-        { label: "Avg Time-to-Triage", value: "4.2 Mins (↓ 32%)", color: "text-emerald-400" }
+        { label: "Top Priority Outage", value: "OUT-2026-0723-N91 (Score: 92.4)", color: "text-rose-400" },
+        { label: "Active Queue Count", value: "24 Incidents Open", color: "text-blue-400" },
+        { label: "Avg Time-to-Triage", value: "3h 42m MTTR (↓ 30%)", color: "text-emerald-400" }
       ]
     }
   },
@@ -50,22 +50,22 @@ const personas: Persona[] = [
     role: "Regional Ops Manager",
     avatarBg: "from-purple-600 to-indigo-600",
     icon: "🗺️",
-    quote: "I manage North Region operations. I need real-time alerts when complaint velocity in my territory crosses critical SLA thresholds.",
+    quote: "I manage regional operations. I need real-time alerts when complaint velocity in my territory crosses critical SLA thresholds.",
     needs: [
       "Region-filtered impact view showing active tower nodes & affected subscribers",
       "SLA escalation tracking before contract breach penalties hit",
       "Complaint spike detection correlated with region revenue tiers"
     ],
     keyFeatures: [
-      "Region Impact Heatmap & Ranking (FR11)",
+      "Region Impact Heatmap & Ranking",
       "SLA Breach Escalation Warnings",
-      "Multi-Region Comparison View"
+      "Multi-Circle Comparison Matrix"
     ],
     mockData: {
-      title: "Priya's North Region Operational Status",
+      title: "Priya's Mumbai Circle Operational Status",
       metrics: [
-        { label: "North Region Subscriptions", value: "450,000 Total", color: "text-purple-400" },
-        { label: "Active Regional Outages", value: "2 Outages (1 Critical)", color: "text-amber-400" },
+        { label: "Mumbai Active Subscribers", value: "4.2M Total", color: "text-purple-400" },
+        { label: "Active Regional Outages", value: "4 Incidents (Critical P1)", color: "text-amber-400" },
         { label: "SLA Risk Margin", value: "38 Mins Remaining", color: "text-rose-400" }
       ]
     }
@@ -76,7 +76,7 @@ const personas: Persona[] = [
     role: "Customer Experience Lead",
     avatarBg: "from-amber-600 to-orange-600",
     icon: "💬",
-    quote: "When 500 customers tweet or call about data drops, I need to know which specific outage caused it so we can trigger automated credits and SMS comms.",
+    quote: "When customers tweet or call about data drops, I need to know which specific outage caused it so we can trigger proactive comms.",
     needs: [
       "Direct correlation between call center complaint logs & network outage IDs",
       "Spatio-temporal matching for unlinked complaint records",
@@ -84,14 +84,14 @@ const personas: Persona[] = [
     ],
     keyFeatures: [
       "Complaint Pressure Component (30% Wt)",
-      "Unlinked Complaint Matcher (PRD Sec 6)",
-      "Proactive Comms Credit Trigger"
+      "Unlinked Complaint Matcher",
+      "Proactive Customer Comms Tracking"
     ],
     mockData: {
       title: "Farah's CX & Complaint Pressure Panel",
       metrics: [
-        { label: "Linked Complaints", value: "1,240 Logged Today", color: "text-amber-400" },
-        { label: "Complaint Velocity Spike", value: "+480 / hr Peak", color: "text-rose-400" },
+        { label: "Linked Complaints", value: "1,842 Logged Today", color: "text-amber-400" },
+        { label: "Complaint Velocity Spike", value: "+342 / hr Peak", color: "text-rose-400" },
         { label: "Matched Outage Confidence", value: "96% Spatio-Temporal", color: "text-emerald-400" }
       ]
     }
@@ -109,15 +109,15 @@ const personas: Persona[] = [
       "Exportable executive PDF / CSV report generation"
     ],
     keyFeatures: [
-      "Executive View Toggle (FR15)",
-      "Automated PDF/CSV Reports (FR14)",
-      "Rolling Trend Analytics (FR12)"
+      "Top 5 Executive View Toggle",
+      "Automated PDF/CSV Reports",
+      "Rolling Trend Analytics"
     ],
     mockData: {
       title: "Vikram's Weekly Executive Summary",
       metrics: [
-        { label: "Top 5 Impact Total", value: "$182,000 Exposure", color: "text-emerald-400" },
-        { label: "SLA Resolution Rate", value: "94.8% (Target >= 90%)", color: "text-blue-400" },
+        { label: "Top 5 Impact Total", value: "₹42.3 Cr Exposure", color: "text-emerald-400" },
+        { label: "SLA Resolution Rate", value: "84.0% (Target >= 90%)", color: "text-blue-400" },
         { label: "Weekly Trend", value: "↓ 18% Total Outage Hours", color: "text-indigo-400" }
       ]
     }
@@ -135,7 +135,7 @@ export default function PersonasSection() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-mono font-semibold">
-            PRD SECTION 4 PERSONAS
+            OPERATIONAL STAKEHOLDER PERSONAS
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Tailored for the Entire Telecom Operations Stack
@@ -199,7 +199,7 @@ export default function PersonasSection() {
             {/* User Needs */}
             <div className="space-y-3">
               <h4 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">
-                Core Needs (PRD Sec 4)
+                Core Operational Needs
               </h4>
               <ul className="space-y-2 text-xs sm:text-sm text-gray-300">
                 {selectedPersona.needs.map((need, idx) => (
@@ -213,7 +213,7 @@ export default function PersonasSection() {
 
             {/* Key Features Mapped */}
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-800">
-              <span className="text-xs text-gray-400 font-semibold">Mapped PRD Features:</span>
+              <span className="text-xs text-gray-400 font-semibold">Platform Capabilities:</span>
               {selectedPersona.keyFeatures.map((feat, idx) => (
                 <span key={idx} className="px-2.5 py-1 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 text-xs font-mono">
                   {feat}
@@ -242,13 +242,10 @@ export default function PersonasSection() {
             </div>
 
             <div className="pt-2 text-center">
-              <a
-                href="#queue-preview"
-                className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-semibold"
-              >
-                <span>Inspect in Live Queue Preview</span>
-                <span>→</span>
-              </a>
+              <span className="inline-flex items-center gap-1.5 text-xs text-blue-400 font-semibold">
+                <span>Integrated into Operations Suite</span>
+                <span>✓</span>
+              </span>
             </div>
           </div>
 

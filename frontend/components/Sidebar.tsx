@@ -221,7 +221,7 @@ export default function Sidebar({
           <span>Last refresh: 2 min ago</span>
         </div>
         <div className="font-mono text-purple-400 font-semibold">
-          v1.0 - NOC Squad
+          Telecom Operations Suite
         </div>
       </div>
     </aside>

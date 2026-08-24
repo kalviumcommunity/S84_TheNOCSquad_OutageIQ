@@ -26,7 +26,7 @@ export default function RoiCalculator() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-semibold">
-            PRD SECTION 10 BUSINESS CASE ESTIMATOR
+            BUSINESS VALUE & ROI ESTIMATOR
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Calculate Your Telecom ROI & Savings
@@ -134,7 +134,7 @@ export default function RoiCalculator() {
             </div>
 
             <div className="text-[11px] text-gray-400">
-              * Based on PRD Goal G4 (30% reduction in time-to-triage) and Target G3 (SLA compliance ≥ 90%).
+              * Based on 30% reduction in time-to-triage and Target SLA compliance ≥ 90%.
             </div>
           </div>
 

@@ -82,10 +82,10 @@ export default function Header({
             >
               <div className="px-3 py-2 border-b border-gray-100 mb-1">
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono">
-                  PRD Personas & View Switcher
+                  Operational Personas & View Switcher
                 </div>
                 <p className="text-[11px] text-gray-500 mt-0.5">
-                  Select a stakeholder persona from PRD.md to highlight their tailored workflow:
+                  Select an operational persona to highlight their tailored workflow:
                 </p>
               </div>
 

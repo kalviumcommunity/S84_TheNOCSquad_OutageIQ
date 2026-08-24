@@ -105,19 +105,19 @@ export default function PrdRequirementsExplorer() {
   const currentSchemaObj = dataSchemas.find((s) => s.id === selectedSchema) || dataSchemas[0];
 
   return (
-    <section id="prd-spec" className="py-20 bg-gray-950 border-t border-gray-800/80">
+    <section id="system-spec" className="py-20 bg-gray-950 border-t border-gray-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-mono font-semibold">
-            PRD SECTIONS 6, 8, 9 EXPLORER
+            SYSTEM ARCHITECTURE & SPECIFICATIONS
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Complete PRD Technical Requirements
+            System Technical Specifications & Schemas
           </h2>
           <p className="text-gray-400 text-base">
-            Explore the exact specifications, schemas, functional requirements, and non-functional guarantees established by The NOC Squad.
+            Explore the exact architecture, data schemas, functional capabilities, and non-functional guarantees governing the OutageIQ platform.
           </p>
         </div>
 
