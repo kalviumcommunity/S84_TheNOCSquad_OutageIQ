@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import { REGIONS_DATA, OutageItem } from "@/lib/data";
 import { downloadExecutivePdf } from "@/lib/pdf";
 import { useFilter } from "@/context/FilterContext";
-import { FileText, FileSpreadsheet, Globe, Download, Check, Filter, RotateCcw } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { FileText, FileSpreadsheet, Globe, Download, Check, Filter, RotateCcw, Award, Shield } from "lucide-react";
 
 export default function ExportView() {
+  const { user, isLeadership } = useAuth();
   const {
     sortedOutages,
     hasActiveFilters,
@@ -87,8 +89,33 @@ export default function ExportView() {
 
   return (
     <div className="space-y-6">
-      
-      {/* Toast */}
+      {/* Leadership Executive Banner for Vikram */}
+      {isLeadership && (
+        <div className="bg-amber-950/80 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-100 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-600 flex items-center justify-center text-white shrink-0 shadow-md">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white">Executive Reporting &amp; Briefing Portal</span>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  Confidential Boardroom Exports
+                </span>
+              </div>
+              <p className="text-xs text-amber-300/90 mt-0.5">
+                Generate high-resolution Executive PDF Incident Briefings and prioritized CSV data exports for C-suite and board stakeholders.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 self-start sm:self-auto shrink-0">
+            <Shield className="w-3.5 h-3.5 text-amber-400" />
+            <span>Executive Export Mode</span>
+          </div>
+        </div>
+      )}
+
+      {/* Success Download Toast */}
       {downloadSuccess && (
         <div className="p-3 bg-emerald-900 text-white rounded-xl text-xs font-semibold shadow-lg animate-in fade-in flex items-center justify-between">
           <div className="flex items-center gap-2">

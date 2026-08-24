@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { INITIAL_OUTAGES, OutageItem } from "@/lib/data";
 import { escalateOutageApi, assignOutageApi } from "@/lib/api";
 import { useFilter } from "@/context/FilterContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   UserCheck,
   ShieldAlert,
@@ -12,10 +13,13 @@ import {
   RotateCcw,
   Search,
   CheckCircle2,
-  AlertOctagon
+  AlertOctagon,
+  Zap,
+  Activity
 } from "lucide-react";
 
 export default function QueueView() {
+  const { user, isNocEngineer } = useAuth();
   const {
     selectedRegion,
     setSelectedRegion,
@@ -66,6 +70,32 @@ export default function QueueView() {
 
   return (
     <div className="space-y-6">
+      {/* NOC Operational Mode Banner for Rahul */}
+      {isNocEngineer && (
+        <div className="bg-purple-950/80 border border-purple-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-purple-100 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center text-white shrink-0 shadow-md">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white">NOC Operational Dispatch Mode</span>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                  Full Dispatch Controls
+                </span>
+              </div>
+              <p className="text-xs text-purple-300/90 mt-0.5">
+                Real-time incident queue ranked by composite Impact Score. Emergency P1 field tech escalation &amp; Tier-3 optical lead assignments are active.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 self-start sm:self-auto shrink-0">
+            <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+            <span>9 Signals Monitored</span>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {notification && (
         <div className="p-3 bg-purple-900 text-white rounded-xl text-xs font-semibold shadow-lg animate-in fade-in flex items-center justify-between">

@@ -4,10 +4,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import { REGIONS_DATA, RegionMetric } from "@/lib/data";
 import { fetchRegions } from "@/lib/api";
 import Link from "next/link";
-import { ArrowRight, Filter } from "lucide-react";
+import { ArrowRight, Filter, Globe, MapPin, Shield } from "lucide-react";
 import { useFilter } from "@/context/FilterContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RegionsView() {
+  const { user, isRegionalOps } = useAuth();
   const { selectedRegion, setSelectedRegion } = useFilter();
   const [regions, setRegions] = useState<RegionMetric[]>(REGIONS_DATA);
   const [manualSelectedRegion, setManualSelectedRegion] = useState<RegionMetric | null>(null);
@@ -46,6 +48,31 @@ export default function RegionsView() {
 
   return (
     <div className="space-y-6">
+      {/* Regional Ops Manager Command Banner for Priya */}
+      {isRegionalOps && (
+        <div className="bg-blue-950/80 border border-blue-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-blue-100 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-md">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white">Regional Geo-Operations Command</span>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                  Circle SLA &amp; Density Management
+                </span>
+              </div>
+              <p className="text-xs text-blue-300/90 mt-0.5">
+                Monitoring 9 geographic operating circles. Drill down into subscriber reach, regional SLA breach countdowns, and revenue tiers.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 self-start sm:self-auto shrink-0">
+            <MapPin className="w-3.5 h-3.5 text-blue-400" />
+            <span>Circle: {selectedRegionMetric.name} Active</span>
+          </div>
+        </div>
+      )}
       
       {/* Top Grid: Left Region Impact Ranking (6 cols) & Right Impact Score Chart (6 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -9,8 +9,11 @@ import {
 } from "lucide-react";
 import { INITIAL_OUTAGES, OutageItem, HOURLY_COMPLAINTS, SEVEN_DAY_TREND } from "@/lib/data";
 import { useFilter } from "@/context/FilterContext";
+import { useAuth } from "@/context/AuthContext";
+import { ArrowRight, ShieldCheck, Zap, Globe, TrendingUp, Award } from "lucide-react";
 
 export default function OverviewView() {
+  const { user } = useAuth();
   const {
     sortedOutages,
     hasActiveFilters,
@@ -57,6 +60,41 @@ export default function OverviewView() {
 
   return (
     <div className="space-y-6">
+      {/* Role-Specific Quick Jump Banner */}
+      {user && (
+        <div className="bg-gradient-to-r from-[#1C143B] to-[#251A4F] text-white border border-[#37286D] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-md ${
+              user.roleType === "noc_engineer" ? "bg-purple-600" :
+              user.roleType === "regional_ops" ? "bg-blue-600" :
+              user.roleType === "cx_lead" ? "bg-emerald-600" :
+              "bg-amber-600"
+            }`}>
+              {user.initials}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white">Welcome, {user.name}</span>
+                <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${user.roleBadgeColor}`}>
+                  {user.role}
+                </span>
+              </div>
+              <p className="text-xs text-gray-300 mt-0.5">
+                {user.jobSummary}
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href={user.primaryRoute}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 active:scale-95 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-purple-600/30 self-start sm:self-auto shrink-0 cursor-pointer"
+          >
+            <span>Open {user.primaryRouteName}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+
       {/* 1. Critical Alert Banner */}
       {!alertDismissed && (
         <div className="bg-[#FFF5F5] border border-[#FED7D7] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
