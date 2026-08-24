@@ -79,7 +79,7 @@ export default function ImpactCalculator() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono font-semibold">
-            PRD SECTION 7 & PHASE 4 IMPLEMENTATION
+            VECTORIZED 4-FACTOR COMPOSITE SCORING
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Interactive Impact Scoring Simulator
@@ -182,7 +182,7 @@ export default function ImpactCalculator() {
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
               />
               <p className="text-[11px] text-gray-400">
-                Subscribers affected in region ÷ Total subscriber base (PRD Reach_norm)
+                Subscribers affected in region ÷ Total subscriber base (Normalized Reach)
               </p>
             </div>
 
@@ -206,7 +206,7 @@ export default function ImpactCalculator() {
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
               <p className="text-[11px] text-gray-400">
-                Complaint count + Velocity spike per hour during active window (PRD Complaints_norm)
+                Complaint count + Velocity spike per hour during active window (Normalized Complaints)
               </p>
             </div>
 
@@ -230,7 +230,7 @@ export default function ImpactCalculator() {
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
               />
               <p className="text-[11px] text-gray-400">
-                Region revenue tier × Est. outage duration (PRD Revenue_norm)
+                Region revenue tier × Est. outage duration (Normalized Revenue Exposure)
               </p>
             </div>
 
@@ -290,7 +290,7 @@ export default function ImpactCalculator() {
               {/* Formula Breakdown Table */}
               <div className="mt-6 space-y-2.5 text-xs font-mono">
                 <div className="text-gray-400 font-sans font-semibold mb-2 text-[11px] uppercase tracking-wider">
-                  Sub-Score Weighted Contribution (PRD FR10)
+                  Sub-Score Weighted Contribution Breakdown
                 </div>
 
                 <div className="flex justify-between p-2 rounded bg-gray-950/60 border border-gray-800">

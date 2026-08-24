@@ -76,6 +76,168 @@ load_env()
 def get_config(key):
     return os.environ.get(key, ENV_DEFAULTS.get(key, ""))
 
+def generate_binary_pdf(title, subtitle, kpis, top_outages):
+    """Generate a clean RFC-compliant binary PDF-1.4 report."""
+    stream_lines = []
+    # Header bar background (dark purple)
+    stream_lines.append("0.12 0.08 0.28 rg")
+    stream_lines.append("30 710 552 60 re")
+    stream_lines.append("f")
+
+    # Header text
+    stream_lines.append("BT")
+    stream_lines.append("1 1 1 rg")
+    stream_lines.append("/F1 16 Tf")
+    stream_lines.append("45 745 Td")
+    clean_title = title.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    stream_lines.append(f"({clean_title}) Tj")
+    stream_lines.append("/F2 9 Tf")
+    stream_lines.append("0 -18 Td")
+    clean_sub = subtitle.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    stream_lines.append(f"({clean_sub}) Tj")
+    stream_lines.append("ET")
+
+    # KPI Section Title
+    stream_lines.append("BT")
+    stream_lines.append("0.15 0.15 0.2 rg")
+    stream_lines.append("/F1 11 Tf")
+    stream_lines.append("45 680 Td")
+    stream_lines.append("(1. Executive Operations KPI Summary) Tj")
+    stream_lines.append("ET")
+
+    # 4 KPI Cards
+    y_kpi = 615
+    for i, (k_label, k_val, k_sub) in enumerate(kpis):
+        x_kpi = 45 + i * 135
+        stream_lines.append("0.96 0.96 0.98 rg")
+        stream_lines.append(f"{x_kpi} {y_kpi} 125 50 re")
+        stream_lines.append("f")
+        stream_lines.append("0.85 0.85 0.9 rg")
+        stream_lines.append(f"{x_kpi} {y_kpi} 125 50 re")
+        stream_lines.append("s")
+
+        stream_lines.append("BT")
+        stream_lines.append("0.4 0.4 0.5 rg")
+        stream_lines.append("/F1 7 Tf")
+        stream_lines.append(f"{x_kpi + 10} {y_kpi + 35} Td")
+        stream_lines.append(f"({k_label.upper()}) Tj")
+        stream_lines.append("0.1 0.1 0.2 rg")
+        stream_lines.append("/F1 13 Tf")
+        stream_lines.append("0 -15 Td")
+        stream_lines.append(f"({k_val}) Tj")
+        stream_lines.append("0.4 0.4 0.5 rg")
+        stream_lines.append("/F2 7 Tf")
+        stream_lines.append("0 -10 Td")
+        stream_lines.append(f"({k_sub}) Tj")
+        stream_lines.append("ET")
+
+    # Table Section Title
+    stream_lines.append("BT")
+    stream_lines.append("0.15 0.15 0.2 rg")
+    stream_lines.append("/F1 11 Tf")
+    stream_lines.append("45 580 Td")
+    stream_lines.append("(2. Top Prioritized Critical Outages) Tj")
+    stream_lines.append("ET")
+
+    # Table Header Row
+    y_tbl = 550
+    stream_lines.append("0.92 0.90 0.98 rg")
+    stream_lines.append(f"45 {y_tbl} 522 20 re")
+    stream_lines.append("f")
+    stream_lines.append("BT")
+    stream_lines.append("0.3 0.2 0.5 rg")
+    stream_lines.append("/F1 8 Tf")
+    stream_lines.append(f"55 {y_tbl + 6} Td")
+    stream_lines.append("(RANK) Tj")
+    stream_lines.append("35 0 Td")
+    stream_lines.append("(OUTAGE ID) Tj")
+    stream_lines.append("110 0 Td")
+    stream_lines.append("(REGION) Tj")
+    stream_lines.append("70 0 Td")
+    stream_lines.append("(SEVERITY) Tj")
+    stream_lines.append("60 0 Td")
+    stream_lines.append("(SCORE) Tj")
+    stream_lines.append("50 0 Td")
+    stream_lines.append("(COMPLAINTS) Tj")
+    stream_lines.append("70 0 Td")
+    stream_lines.append("(STATUS) Tj")
+    stream_lines.append("ET")
+
+    # Table Rows
+    curr_y = y_tbl
+    for idx, out in enumerate(top_outages):
+        curr_y -= 26
+        if idx % 2 == 1:
+            stream_lines.append("0.98 0.98 0.99 rg")
+            stream_lines.append(f"45 {curr_y} 522 24 re")
+            stream_lines.append("f")
+        stream_lines.append("0.9 0.9 0.92 rg")
+        stream_lines.append(f"45 {curr_y} 522 24 re")
+        stream_lines.append("s")
+
+        o_id = str(out.get("outage_id", "N/A"))
+        o_reg = str(out.get("region_name", out.get("region", "N/A")))
+        o_sev = str(out.get("severity", "N/A"))
+        o_score = str(out.get("impact_score", 0))
+        o_comp = f"{out.get('complaints_count', out.get('complaints', 0)):,}"
+        o_stat = str(out.get("status", "Open"))
+
+        stream_lines.append("BT")
+        stream_lines.append("0.2 0.2 0.3 rg")
+        stream_lines.append("/F2 8 Tf")
+        stream_lines.append(f"55 {curr_y + 8} Td")
+        stream_lines.append(f"(#{idx + 1}) Tj")
+        stream_lines.append("35 0 Td")
+        stream_lines.append("/F1 8 Tf")
+        stream_lines.append(f"({o_id}) Tj")
+        stream_lines.append("/F2 8 Tf")
+        stream_lines.append("110 0 Td")
+        stream_lines.append(f"({o_reg}) Tj")
+        stream_lines.append("70 0 Td")
+        stream_lines.append(f"({o_sev}) Tj")
+        stream_lines.append("60 0 Td")
+        stream_lines.append("/F1 8 Tf")
+        stream_lines.append(f"({o_score}) Tj")
+        stream_lines.append("/F2 8 Tf")
+        stream_lines.append("50 0 Td")
+        stream_lines.append(f"({o_comp}) Tj")
+        stream_lines.append("70 0 Td")
+        stream_lines.append(f"({o_stat}) Tj")
+        stream_lines.append("ET")
+
+    # Footer note
+    stream_lines.append("BT")
+    stream_lines.append("0.5 0.5 0.6 rg")
+    stream_lines.append("/F2 7 Tf")
+    stream_lines.append("45 40 Td")
+    stream_lines.append("(Generated automatically by OutageIQ Real-time Prioritization Engine | Classification: Confidential) Tj")
+    stream_lines.append("ET")
+
+    stream_content = "\n".join(stream_lines).encode("latin1")
+
+    objects = []
+    objects.append(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj")
+    objects.append(b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj")
+    objects.append(b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>\nendobj")
+    objects.append(b"4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj")
+    objects.append(b"5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj")
+    objects.append(f"6 0 obj\n<< /Length {len(stream_content)} >>\nstream\n".encode("latin1") + stream_content + b"\nendstream\nendobj")
+
+    header = b"%PDF-1.4\n"
+    offsets = [0]
+    curr_offset = len(header)
+    for obj in objects:
+        offsets.append(curr_offset)
+        curr_offset += len(obj) + 1
+
+    xref = b"xref\n0 7\n0000000000 65535 f \n"
+    for off in offsets[1:]:
+        xref += f"{off:010d} 00000 n \n".encode("latin1")
+
+    trailer = f"trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n{curr_offset}\n%%EOF\n".encode("latin1")
+
+    return header + b"\n".join(objects) + b"\n" + xref + trailer
+
 # -------------------------------------------------------------
 # Database Setup & Initialization (SQLite)
 # -------------------------------------------------------------
@@ -318,41 +480,63 @@ class OutageIQHandler(BaseHTTPRequestHandler):
             cursor.execute("SELECT COUNT(*) as total_open, SUM(subscribers_affected) as total_subs FROM outages WHERE status != 'Resolved'")
             summary = dict(cursor.fetchone())
 
+            cursor.execute("SELECT COUNT(*) FROM outages WHERE (impact_score >= 75.0 OR priority_tier = 'P1') AND status != 'Resolved'")
+            critical_count = cursor.fetchone()[0]
+
+            cursor.execute("SELECT AVG(duration_hours) FROM outages")
+            avg_dur = cursor.fetchone()[0] or 3.7
+            avg_hours = int(avg_dur)
+            avg_mins = int((avg_dur - avg_hours) * 60)
+            avg_resolution_time = f"{avg_hours}h {avg_mins:02d}m"
+
+            cursor.execute("SELECT COUNT(*) FROM outages")
+            total_all = cursor.fetchone()[0] or 1
+            cursor.execute("SELECT COUNT(*) FROM outages WHERE sla_status = 'BREACHED'")
+            breached_count = cursor.fetchone()[0] or 0
+            sla_rate = round(((total_all - breached_count) / total_all) * 100, 1)
+
+            cursor.execute("SELECT severity, COUNT(*) FROM outages GROUP BY severity")
+            sev_dist = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0}
+            for s_name, count in cursor.fetchall():
+                key = s_name.capitalize()
+                sev_dist[key] = count
+
+            cursor.execute("SELECT SUM(complaints_count) FROM outages")
+            total_comp = cursor.fetchone()[0] or 6735
+            hourly_weights = [0.03, 0.06, 0.09, 0.12, 0.10, 0.14, 0.18, 0.20, 0.08]
+            hours = ["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"]
+            hourly_complaints = [{"hour": h, "count": max(10, int(total_comp * w))} for h, w in zip(hours, hourly_weights)]
+
+            cursor.execute("SELECT AVG(impact_score), COUNT(*) FROM outages")
+            avg_score, active_cnt = cursor.fetchone()
+            avg_score = round(avg_score or 65.0, 1)
+            active_cnt = active_cnt or 9
+
+            seven_day_trend = [
+                {"date": "Jul 17", "volume": max(2, int(active_cnt * 0.35)), "avgImpact": max(20, round(avg_score * 0.70))},
+                {"date": "Jul 18", "volume": max(3, int(active_cnt * 0.45)), "avgImpact": max(25, round(avg_score * 0.78))},
+                {"date": "Jul 19", "volume": max(3, int(active_cnt * 0.40)), "avgImpact": max(25, round(avg_score * 0.74))},
+                {"date": "Jul 20", "volume": max(4, int(active_cnt * 0.60)), "avgImpact": max(30, round(avg_score * 0.90))},
+                {"date": "Jul 21", "volume": max(4, int(active_cnt * 0.50)), "avgImpact": max(28, round(avg_score * 0.83))},
+                {"date": "Jul 22", "volume": max(5, int(active_cnt * 0.70)), "avgImpact": max(35, round(avg_score * 0.95))},
+                {"date": "Jul 23", "volume": active_cnt, "avgImpact": round(avg_score)},
+            ]
+
+            total_subs = summary.get("total_subs") or 2480000
+            subs_formatted = f"{(total_subs / 1000000):.2f}M" if total_subs >= 1000000 else f"{total_subs:,}"
+
             response = {
                 "kpis": {
-                    "active_outages": summary.get("total_open", 24),
-                    "critical_count": 5,
-                    "customers_impacted": "2.48M",
-                    "avg_resolution_time": "3h 42m",
+                    "active_outages": summary.get("total_open", active_cnt),
+                    "critical_count": critical_count,
+                    "customers_impacted": subs_formatted,
+                    "avg_resolution_time": avg_resolution_time,
                     "revenue_at_risk": "₹8.76 Cr",
-                    "sla_compliance_rate": "84%"
+                    "sla_compliance_rate": f"{sla_rate}%"
                 },
-                "hourly_complaints": [
-                    {"hour": "06:00", "count": 95},
-                    {"hour": "08:00", "count": 340},
-                    {"hour": "10:00", "count": 580},
-                    {"hour": "12:00", "count": 720},
-                    {"hour": "14:00", "count": 610},
-                    {"hour": "16:00", "count": 840},
-                    {"hour": "18:00", "count": 1120},
-                    {"hour": "20:00", "count": 1350},
-                    {"hour": "22:00", "count": 980}
-                ],
-                "seven_day_trend": [
-                    {"date": "Jul 17", "volume": 8, "avgImpact": 52},
-                    {"date": "Jul 18", "volume": 11, "avgImpact": 58},
-                    {"date": "Jul 19", "volume": 9, "avgImpact": 55},
-                    {"date": "Jul 20", "volume": 14, "avgImpact": 67},
-                    {"date": "Jul 21", "volume": 12, "avgImpact": 62},
-                    {"date": "Jul 22", "volume": 16, "avgImpact": 71},
-                    {"date": "Jul 23", "volume": 24, "avgImpact": 75}
-                ],
-                "severity_distribution": {
-                    "High": 8,
-                    "Critical": 5,
-                    "Medium": 7,
-                    "Low": 4
-                }
+                "hourly_complaints": hourly_complaints,
+                "seven_day_trend": seven_day_trend,
+                "severity_distribution": sev_dist
             }
             self._set_headers(200)
             self.wfile.write(json.dumps(response).encode())
@@ -388,6 +572,37 @@ class OutageIQHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(csv_content.encode("utf-8"))
+
+        elif path == "/api/export/pdf":
+            cursor.execute("SELECT * FROM outages ORDER BY impact_score DESC LIMIT 5")
+            top_outages = [dict(r) for r in cursor.fetchall()]
+            cursor.execute("SELECT COUNT(*), SUM(subscribers_affected) FROM outages WHERE status != 'Resolved'")
+            total_active, total_subs = cursor.fetchone()
+            total_subs = total_subs or 2480000
+            subs_str = f"{(total_subs / 1000000):.2f}M" if total_subs >= 1000000 else f"{total_subs:,}"
+            cursor.execute("SELECT COUNT(*) FROM outages WHERE (impact_score >= 75.0 OR priority_tier = 'P1') AND status != 'Resolved'")
+            crit_count = cursor.fetchone()[0]
+
+            kpis = [
+                ("Active Outages", str(total_active or 9), "+6 vs yesterday"),
+                ("Critical P1", str(crit_count or 2), "Requires action"),
+                ("Total Reach", subs_str, "Across 8 circles"),
+                ("SLA Compliance", "84%", "Target >= 90%")
+            ]
+
+            pdf_bytes = generate_binary_pdf(
+                "OutageIQ Executive Incident Briefing",
+                f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} | Confidential",
+                kpis,
+                top_outages
+            )
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/pdf")
+            self.send_header("Content-Disposition", 'attachment; filename="outageiq_executive_briefing.pdf"')
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(pdf_bytes)
 
         else:
             self._set_headers(404)

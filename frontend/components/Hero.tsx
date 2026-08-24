@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -21,10 +22,10 @@ export default function Hero() {
           {/* Left Column: Text & CTAs */}
           <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
             
-            {/* PRD Tag */}
+            {/* Platform Tag */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold tracking-wide">
               <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-              <span>THE NOC SQUAD • PRD RELEASE SPECIFICATION</span>
+              <span>THE NOC SQUAD • ENTERPRISE NOC PLATFORM</span>
             </div>
 
             {/* Headline */}
@@ -46,26 +47,26 @@ export default function Hero() {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-              <a
-                href="#calculator"
+              <Link
+                href="/queue"
                 className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold text-sm shadow-xl shadow-blue-600/30 hover:shadow-blue-600/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span>Try Live Impact Calculator</span>
-              </a>
+                <span>Launch Interactive Queue</span>
+              </Link>
 
-              <a
-                href="#queue-preview"
+              <Link
+                href="/analytics"
                 className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gray-900/90 border border-gray-800 text-gray-200 hover:text-white hover:bg-gray-800 font-semibold text-sm transition-all flex items-center justify-center gap-2 group"
               >
                 <svg className="w-5 h-5 text-purple-400 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                <span>Explore Prioritized Queue</span>
-              </a>
+                <span>Explore Analytics & Trends</span>
+              </Link>
             </div>
 
             {/* Quick Metrics Cards */}
@@ -165,7 +166,7 @@ export default function Hero() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      OutageIQ Scoring Engine (FR5)
+                      OutageIQ Scoring Engine
                     </div>
                   </div>
 
@@ -176,14 +177,14 @@ export default function Hero() {
                         <span className="px-2 py-0.5 rounded bg-rose-500 text-white text-[10px] font-extrabold uppercase tracking-wider">
                           CRITICAL #1
                         </span>
-                        <span className="text-xs font-mono text-gray-300 font-semibold">OUT-8902 (North Region)</span>
+                        <span className="text-xs font-mono text-gray-300 font-semibold">OUT-2026-0723-N91 (Mumbai)</span>
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-extrabold font-mono text-rose-400">92.4 <span className="text-xs text-gray-400 font-normal">/100</span></div>
                       </div>
                     </div>
                     <div className="mt-2 text-xs text-gray-300">
-                      12,400 Subscribers • 480 complaints/hr • $45k ARPU Exposure
+                      42,000 Subscribers • 1,842 complaints/hr • ₹38.5 L/hr Exposure
                     </div>
                   </div>
 

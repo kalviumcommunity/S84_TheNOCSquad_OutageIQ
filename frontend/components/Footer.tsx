@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -20,35 +21,35 @@ export default function Footer() {
               Network Outage Impact Prioritization Engine. Fusing network alerts, complaint velocity, and regional revenue into explainable triage.
             </p>
             <div className="text-[11px] font-mono text-gray-500">
-              PRD Release Date: 27 July 2026
+              Telecom Operations Suite
             </div>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-3">
             <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-              PRD Navigation
+              Platform Navigation
             </h4>
             <ul className="space-y-2">
-              <li><a href="#calculator" className="hover:text-white transition-colors">Scoring Simulator (Sec 7)</a></li>
-              <li><a href="#queue-preview" className="hover:text-white transition-colors">Live Queue Demo (Sec 8.3)</a></li>
-              <li><a href="#personas" className="hover:text-white transition-colors">Target Personas (Sec 4)</a></li>
-              <li><a href="#methodology" className="hover:text-white transition-colors">5-Step Pipeline (Sec 6)</a></li>
-              <li><a href="#prd-spec" className="hover:text-white transition-colors">FR1–FR16 Specs (Sec 8)</a></li>
+              <li><Link href="/overview" className="hover:text-white transition-colors">Overview Dashboard</Link></li>
+              <li><Link href="/queue" className="hover:text-white transition-colors">Outage Queue</Link></li>
+              <li><Link href="/regions" className="hover:text-white transition-colors">Region View</Link></li>
+              <li><Link href="/analytics" className="hover:text-white transition-colors">Analytics</Link></li>
+              <li><Link href="/export" className="hover:text-white transition-colors">Exportable Data</Link></li>
             </ul>
           </div>
 
           {/* Tech Stack */}
           <div className="space-y-3">
             <h4 className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-              Tech Stack Mapped (Sec 12)
+              Architecture & Stack
             </h4>
             <ul className="space-y-1.5 font-mono text-xs text-gray-400">
               <li>• Python, Pandas, NumPy</li>
-              <li>• SQL Window Functions</li>
-              <li>• Streamlit / Next.js UI</li>
-              <li>• Plotly Analytics</li>
-              <li>• PDF & CSV Automated Export</li>
+              <li>• Vectorized Scoring Pipeline</li>
+              <li>• Next.js & React Dashboard</li>
+              <li>• Real-Time Geo-Analytics</li>
+              <li>• Automated CSV & PDF Export</li>
             </ul>
           </div>
 
@@ -72,11 +73,12 @@ export default function Footer() {
 
         <div className="mt-12 pt-8 border-t border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <div>
-            © 2026 OutageIQ — The NOC Squad. All rights reserved. PRD v1.0 Release.
+            © 2026 OutageIQ — The NOC Squad. All rights reserved.
           </div>
           <div className="flex items-center gap-4">
-            <a href="#prd-spec" className="hover:text-gray-300 transition-colors">Privacy & Data Quality</a>
-            <a href="#prd-spec" className="hover:text-gray-300 transition-colors">SLA Guarantees</a>
+            <span className="text-gray-400">Enterprise NOC Solution</span>
+            <span className="text-gray-500">•</span>
+            <span className="text-gray-400">SLA Tracking & Governance</span>
           </div>
         </div>
       </div>

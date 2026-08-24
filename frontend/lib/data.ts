@@ -6,7 +6,7 @@ export interface OutageItem {
   node: string;
   severity: "Critical" | "High" | "Medium" | "Low";
   impactScore: number;
-  status: "Open" | "In Progress" | "Resolved";
+  status: "Open" | "In Progress" | "Active Triage" | "Resolved";
   complaints: number;
   duration: string;
   durationHours: number;

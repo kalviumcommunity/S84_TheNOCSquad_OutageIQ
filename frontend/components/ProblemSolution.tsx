@@ -10,7 +10,7 @@ export default function ProblemSolution() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold">
-            PRD SECTION 1 & 2 ANALYSIS
+            OPERATIONAL IMPACT ANALYSIS
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             The Siloed Triage Trap vs. OutageIQ Paradigm
@@ -88,7 +88,7 @@ export default function ProblemSolution() {
                   </div>
                 </div>
                 <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full">
-                  PRD Solution
+                  Modern Standard
                 </span>
               </div>
 

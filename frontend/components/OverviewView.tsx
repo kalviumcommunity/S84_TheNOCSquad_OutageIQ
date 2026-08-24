@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -15,13 +15,24 @@ import {
   ChevronRight
 } from "lucide-react";
 import { INITIAL_OUTAGES, OutageItem, HOURLY_COMPLAINTS, SEVEN_DAY_TREND } from "@/lib/data";
+import { fetchOutages } from "@/lib/api";
 
 export default function OverviewView() {
+  const [outages, setOutages] = useState<OutageItem[]>(INITIAL_OUTAGES);
   const [selectedOutage, setSelectedOutage] = useState<OutageItem>(INITIAL_OUTAGES[0]);
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [hoveredTrendDay, setHoveredTrendDay] = useState<typeof SEVEN_DAY_TREND[0] | null>(null);
 
-  const topOutages = INITIAL_OUTAGES.slice(0, 6);
+  useEffect(() => {
+    fetchOutages().then((data) => {
+      if (data && data.length > 0) {
+        setOutages(data);
+        setSelectedOutage(data[0]);
+      }
+    });
+  }, []);
+
+  const topOutages = outages.slice(0, 6);
 
   // SVG Gauge calculations
   const radius = 42;
