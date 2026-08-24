@@ -427,6 +427,7 @@ All project specifications, engineering planners, RBAC manuals, and setup docume
 - 🛠️ [**`docs/APPLICATION_GUIDE.md`**](docs/APPLICATION_GUIDE.md) — Single-Server Technical Guide (Terminal verification proofs, database inspection, page walkthroughs).
 - ⚙️ [**`docs/CONFIG-SETUP.md`**](docs/CONFIG-SETUP.md) — Configuration Reference Guide (Environment variables, database paths, scoring weight tuning).
 - 🚀 [**`docs/SETUP.md`**](docs/SETUP.md) — Local Execution & Docker Guide (Decoupled vs unified modes, Docker multi-stage builds, CI/CD deploy pipeline).
+- 💡 [**`docs/NON-TECHNICAL-EXPLANATION.md`**](docs/NON-TECHNICAL-EXPLANATION.md) — Plain-English & In-Depth System Guide (Real-world telecom story, 4-ingredient scoring formula, organizational hierarchy, and "A Day in the Life" walkthroughs).
 
 ---
 
