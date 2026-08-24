@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { USER_ACCOUNTS, UserAccount } from "@/lib/auth";
 import {
   Lock,
   User,
@@ -13,31 +12,31 @@ import {
   TrendingUp,
   Award,
   ArrowRight,
-  CheckCircle2,
   AlertCircle,
   KeyRound,
-  Info,
-  ChevronDown,
-  ChevronUp
+  Layers,
+  Activity,
+  CheckCircle2,
+  Cpu,
+  Radio,
+  BarChart3
 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, quickLogin, isAuthenticated, user: currentUser, logout } = useAuth();
+  const { login, isAuthenticated, user: currentUser, logout } = useAuth();
 
   const [userIdInput, setUserIdInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [loadingUser, setLoadingUser] = useState<string | null>(null);
-  const [showCredentialsTable, setShowCredentialsTable] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If already authenticated and visiting /login, show a fast switch or redirect option
   const handleManualLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     if (!userIdInput.trim()) {
-      setErrorMessage("Please enter your Dummy User ID or username.");
+      setErrorMessage("Please enter your user ID.");
       return;
     }
     if (!passwordInput.trim()) {
@@ -45,41 +44,28 @@ export default function LoginPage() {
       return;
     }
 
-    setLoadingUser("manual");
+    setIsSubmitting(true);
     const result = login(userIdInput, passwordInput);
 
     if (result.success && result.user) {
       router.push(result.user.primaryRoute);
     } else {
-      setLoadingUser(null);
-      setErrorMessage(result.error || "Invalid credentials. Please verify your Dummy User ID and password.");
-    }
-  };
-
-  const handleQuickLogin = (acc: UserAccount) => {
-    setErrorMessage(null);
-    setLoadingUser(acc.id);
-    const result = quickLogin(acc.id);
-    if (result.success && result.user) {
-      setTimeout(() => {
-        router.push(result.user!.primaryRoute);
-      }, 200);
-    } else {
-      setLoadingUser(null);
+      setIsSubmitting(false);
+      setErrorMessage(result.error || "Invalid user ID or password. Please check your credentials.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0718] text-gray-100 flex flex-col justify-between selection:bg-purple-600 selection:text-white font-sans">
-      {/* Background Glow Decorations */}
+    <div className="min-h-screen bg-[#090616] text-gray-100 flex flex-col justify-between selection:bg-purple-600 selection:text-white font-sans">
+      {/* Ambient Background Glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl" />
         <div className="absolute top-1/3 -right-40 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Header Bar */}
-      <header className="relative z-10 border-b border-[#1E173D] bg-[#0E0A22]/80 backdrop-blur-md px-4 sm:px-8 py-4 flex items-center justify-between">
+      {/* Top Header Bar */}
+      <header className="relative z-10 border-b border-[#1E163B] bg-[#0E0924]/80 backdrop-blur-md px-4 sm:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-purple-900/50">
             OQ
@@ -89,19 +75,19 @@ export default function LoginPage() {
               OutageIQ
             </span>
             <p className="text-[11px] text-gray-400 font-medium">
-              Network Outage Impact Prioritization Engine
+              Network Operations &amp; Impact Prioritization Platform
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono bg-[#161033] border border-[#2B1F54] px-3 py-1.5 rounded-full text-purple-300">
+        <div className="flex items-center gap-2 text-xs font-mono bg-[#161033] border border-[#2B1F54] px-3.5 py-1.5 rounded-full text-purple-300">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span className="hidden sm:inline">Role-Based Access Control (RBAC) System</span>
-          <span className="sm:hidden">RBAC Active</span>
+          <span className="hidden sm:inline">Telemetry &amp; Security Active</span>
+          <span className="sm:hidden">Online</span>
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Login Area */}
       <main className="relative z-10 max-w-6xl w-full mx-auto px-4 py-8 sm:py-12 flex-1 flex flex-col justify-center">
         {/* Active Session Notification if already logged in */}
         {isAuthenticated && currentUser && (
@@ -135,22 +121,23 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Main Grid: Left Manual Login + Right 4 One-Click Demo Profiles */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Manual Login Form (5 cols) */}
-          <div className="lg:col-span-5 bg-[#120D2A] border border-[#261C50] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden">
+        {/* 2-Column Grid: Left Login Card + Right Big Project Overview Card */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          
+          {/* Left Column: Clean Production Login Form (5 cols) */}
+          <div className="lg:col-span-5 bg-[#120D2A] border border-[#261C50] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden flex flex-col justify-between">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500" />
 
             <div>
               <div className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold text-purple-400 uppercase tracking-wider mb-2">
                 <KeyRound className="w-3.5 h-3.5" />
-                <span>Authentication Portal</span>
+                <span>Secure Access Portal</span>
               </div>
               <h2 className="text-2xl font-black text-white tracking-tight">
                 Sign In to OutageIQ
               </h2>
               <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                Enter your individual dummy user credentials to access your role-specific telecom operational dashboard.
+                Enter your credentials to access your operational dashboard.
               </p>
             </div>
 
@@ -166,7 +153,7 @@ export default function LoginPage() {
               {/* User ID Field */}
               <div>
                 <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                  Dummy User ID / Username
+                  User ID
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
@@ -176,8 +163,8 @@ export default function LoginPage() {
                     type="text"
                     value={userIdInput}
                     onChange={(e) => setUserIdInput(e.target.value)}
-                    placeholder="e.g. rahul.noc, priya.ops, farah.cx, vikram.exec"
-                    className="w-full bg-[#1A133A] border border-[#2E225E] text-white text-xs rounded-xl pl-9 pr-3.5 py-3 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-mono placeholder:text-gray-500"
+                    placeholder="Enter your user ID"
+                    className="w-full bg-[#1A133A] border border-[#2E225E] text-white text-xs rounded-xl pl-9 pr-3.5 py-3 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-sans placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -195,21 +182,21 @@ export default function LoginPage() {
                     type="password"
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="e.g. noc@123, ops@123, cx@123, exec@123"
-                    className="w-full bg-[#1A133A] border border-[#2E225E] text-white text-xs rounded-xl pl-9 pr-3.5 py-3 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-mono placeholder:text-gray-500"
+                    placeholder="Enter your password"
+                    className="w-full bg-[#1A133A] border border-[#2E225E] text-white text-xs rounded-xl pl-9 pr-3.5 py-3 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all font-sans placeholder:text-gray-500"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                disabled={loadingUser !== null}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs py-3.5 rounded-xl transition-all shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs py-3.5 rounded-xl transition-all shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
               >
-                {loadingUser === "manual" ? (
+                {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    <span>Signing In...</span>
+                    <span>Verifying Credentials...</span>
                   </span>
                 ) : (
                   <>
@@ -220,159 +207,96 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="pt-2 border-t border-[#221848] text-center">
-              <p className="text-[11px] text-gray-400">
-                Or select any of the 4 operational roles on the right to log in with 1 click.
+            <div className="pt-4 border-t border-[#221848] text-center">
+              <p className="text-[11px] text-gray-500">
+                OutageIQ Telecom Operations • Role-Based Access Control
               </p>
             </div>
           </div>
 
-          {/* Right Column: 4 One-Click Demo Role Profiles (7 cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  Select an Operational Role (1-Click Login)
-                </h3>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Each persona receives a strictly isolated dashboard and custom layout based on their responsibilities:
-                </p>
+          {/* Right Column: Single Big Card Explaining Project (7 cols) */}
+          <div className="lg:col-span-7 bg-[#120D2A] border border-[#261C50] rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col justify-between space-y-6 relative overflow-hidden">
+            {/* Top Accent Strip */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+
+            <div>
+              <div className="flex items-center gap-2 text-[11px] font-mono font-semibold text-purple-400 uppercase tracking-wider mb-2">
+                <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Telecom Operational Intelligence</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
+                OutageIQ — Network Outage Impact Prioritization Engine
+              </h3>
+              <p className="text-xs text-gray-300 mt-2 leading-relaxed">
+                A unified data product that eliminates operational silos by fusing real-time network alarms, high-velocity customer complaint streams, and regional subscriber metrics into an explainable, composite <strong>Impact Score (0–100)</strong>.
+              </p>
+            </div>
+
+            {/* 3 Core Architecture Pillars */}
+            <div className="space-y-3">
+              {/* Pillar 1 */}
+              <div className="bg-[#191238] border border-[#2B1F54] rounded-2xl p-3.5 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0 mt-0.5 border border-purple-500/30">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">
+                    Multi-Source Signal Fusion
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
+                    Merges raw network infrastructure alarms (core fiber, edge switches), customer complaint logs across call centers and apps, and regional subscriber usage densities.
+                  </p>
+                </div>
+              </div>
+
+              {/* Pillar 2 */}
+              <div className="bg-[#191238] border border-[#2B1F54] rounded-2xl p-3.5 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0 mt-0.5 border border-blue-500/30">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">
+                    Explainable Composite Impact Scoring (0–100)
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
+                    Dynamically computes ranking via four weighted sub-scores: <strong>Customer Reach (35%)</strong>, <strong>Complaint Pressure (30%)</strong>, <strong>Revenue Exposure (20%)</strong>, and <strong>Duration &amp; Severity (15%)</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Pillar 3 */}
+              <div className="bg-[#191238] border border-[#2B1F54] rounded-2xl p-3.5 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/30">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">
+                    Tailored Role-Based Workflows
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
+                    Provides purpose-built interfaces for <strong>NOC Engineers</strong> (live triage &amp; technician dispatch), <strong>Regional Ops Managers</strong> (circle SLA compliance), <strong>CX Leads</strong> (complaint velocity &amp; proactive alerts), and <strong>Leadership</strong> (revenue-at-risk &amp; executive PDF briefings).
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {USER_ACCOUNTS.map((acc) => {
-                const isSelected = currentUser?.id === acc.id;
-                const isLoading = loadingUser === acc.id;
-
-                let Icon = Zap;
-                if (acc.roleType === "regional_ops") Icon = Globe;
-                if (acc.roleType === "cx_lead") Icon = TrendingUp;
-                if (acc.roleType === "leadership") Icon = Award;
-
-                return (
-                  <div
-                    key={acc.id}
-                    onClick={() => handleQuickLogin(acc)}
-                    className={`bg-[#130E29] hover:bg-[#1C143C] border ${
-                      isSelected ? "border-purple-500 bg-[#1D1442] ring-1 ring-purple-500/50 shadow-xl shadow-purple-950/50" : "border-[#271D52] hover:border-[#3C2E7A]"
-                    } rounded-2xl p-4.5 transition-all flex flex-col justify-between group cursor-pointer text-left relative overflow-hidden`}
-                  >
-                    {/* Top Accent Pill */}
-                    <div className="flex items-start justify-between gap-2 mb-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shadow-md ${
-                          acc.roleType === "noc_engineer" ? "bg-purple-600 text-white" :
-                          acc.roleType === "regional_ops" ? "bg-blue-600 text-white" :
-                          acc.roleType === "cx_lead" ? "bg-emerald-600 text-white" :
-                          "bg-amber-600 text-white"
-                        }`}>
-                          {acc.initials}
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors flex items-center gap-1.5">
-                            <span>{acc.name}</span>
-                            {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />}
-                          </h4>
-                          <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded border inline-block mt-0.5 ${acc.roleBadgeColor}`}>
-                            {acc.role}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-1.5 rounded-lg bg-white/5 text-gray-400 group-hover:text-white transition-colors">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                    </div>
-
-                    {/* Job Scope Description */}
-                    <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed mb-3">
-                      {acc.jobSummary}
-                    </p>
-
-                    {/* Footer with Dummy ID and Landing Route */}
-                    <div className="pt-2.5 border-t border-[#231A47] flex items-center justify-between text-[10px] font-mono">
-                      <div>
-                        <span className="text-gray-500">ID: </span>
-                        <span className="text-purple-300 font-semibold">{acc.userId}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
-                        <span>{isLoading ? "Signing in..." : `Open ${acc.primaryRouteName}`}</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Bottom Highlights Strip */}
+            <div className="pt-3 border-t border-[#231A47] flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 font-mono">
+              <div className="flex items-center gap-1.5 text-purple-300 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>9 Geographic Circles Monitored</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-purple-300 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />
+                <span>Sub-Second Queue Prioritization</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-purple-300 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
+                <span>Proactive SLA Breach Defense</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Documentation & Dummy Credentials Reference */}
-        <div className="mt-10 bg-[#120D2A] border border-[#271C50] rounded-3xl p-5 sm:p-6 shadow-xl">
-          <button
-            type="button"
-            onClick={() => setShowCredentialsTable(!showCredentialsTable)}
-            className="w-full flex items-center justify-between text-left cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <Info className="w-4 h-4 text-purple-400" />
-              <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-                Dummy User Credentials &amp; Access Permission Matrix (Reference from USER-ROLE.MD)
-              </span>
-            </div>
-            {showCredentialsTable ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            )}
-          </button>
-
-          {showCredentialsTable && (
-            <div className="mt-4 pt-4 border-t border-[#221848] overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[#241A4C] text-[10px] font-mono text-gray-400 uppercase">
-                    <th className="pb-2.5 font-semibold">User / Profile</th>
-                    <th className="pb-2.5 font-semibold">Dummy User ID</th>
-                    <th className="pb-2.5 font-semibold">Password</th>
-                    <th className="pb-2.5 font-semibold">Primary Dashboard</th>
-                    <th className="pb-2.5 font-semibold">Allowed Pages</th>
-                    <th className="pb-2.5 font-semibold">Restricted Pages</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1F1640] text-gray-300">
-                  {USER_ACCOUNTS.map((acc) => (
-                    <tr key={acc.id} className="hover:bg-white/[0.02]">
-                      <td className="py-2.5 pr-3 font-semibold text-white">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center ${acc.roleBadgeColor}`}>
-                            {acc.initials}
-                          </span>
-                          <span>{acc.name} ({acc.role})</span>
-                        </div>
-                      </td>
-                      <td className="py-2.5 pr-3 font-mono text-purple-300 font-bold">
-                        {acc.userId}
-                      </td>
-                      <td className="py-2.5 pr-3 font-mono text-gray-400">
-                        {acc.password}
-                      </td>
-                      <td className="py-2.5 pr-3 font-mono text-emerald-400">
-                        {acc.primaryRoute}
-                      </td>
-                      <td className="py-2.5 pr-3 font-mono text-[11px] text-gray-300">
-                        {acc.allowedRoutes.filter(r => r !== "/").join(", ")}
-                      </td>
-                      <td className="py-2.5 font-mono text-[11px] text-rose-300">
-                        {acc.restrictedRoutes.map(r => r.route).join(", ") || "None"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </main>
 
