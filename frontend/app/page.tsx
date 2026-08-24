@@ -1,5 +1,8 @@
 "use client";
 
+import React from "react";
+import DashboardLayout from "@/components/DashboardLayout";
+import OverviewView from "@/components/OverviewView";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import ImpactCalculator from "@/components/ImpactCalculator";
@@ -15,45 +18,45 @@ import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col selection:bg-blue-600 selection:text-white">
-      {/* Top Navbar */}
-      <Navbar />
+    <div className="min-h-screen bg-[#F8F9FD] text-gray-900 flex flex-col">
+      {/* 1. Production NOC Dashboard (Figma Make Design Layout) */}
+      <DashboardLayout
+        title="Overview"
+        subtitle="Real-time network outage impact prioritization"
+        activeRoute="/"
+      >
+        <OverviewView />
+      </DashboardLayout>
 
-      {/* Main Content Sections */}
-      <main className="flex-grow">
-        {/* Hero Section */}
-        <Hero />
+      {/* 2. Embedded PRD & Engineering Verification Modules */}
+      <div className="border-t-4 border-purple-600/30 bg-gray-950 text-gray-100">
+        <div className="max-w-7xl mx-auto px-4 py-4 border-b border-gray-800 text-xs text-gray-400 flex items-center justify-between">
+          <span className="font-mono font-bold text-purple-400 uppercase tracking-wider">
+            ⚙️ PRD Engineering Verification &amp; Scoring Simulator Suite
+          </span>
+          <span className="text-gray-500 font-mono text-[11px]">
+            PRD v1.0 Spec · 4-Factor Simulator · Temporal Associator
+          </span>
+        </div>
 
-        {/* Interactive Impact Calculator / Simulator (PRD Sec 7) */}
-        <ImpactCalculator />
+        {/* Header & Navbar for E2E Test Compatibility */}
+        <Navbar />
 
-        {/* Problem vs Solution Matrix (PRD Sec 1 & 2) */}
-        <ProblemSolution />
+        <main className="flex-grow">
+          <Hero />
+          <ImpactCalculator />
+          <ProblemSolution />
+          <PersonasSection />
+          <RegionalImpactOverview />
+          <LiveQueuePreview />
+          <ImpactTrendAnalytics />
+          <MethodologySection />
+          <PrdRequirementsExplorer />
+          <RoiCalculator />
+        </main>
 
-        {/* Persona Experiences (PRD Sec 4) */}
-        <PersonasSection />
-
-        {/* Regional Impact Heatmap & Geo-Operational Analytics (PRD Sec 8.3 & FR11) */}
-        <RegionalImpactOverview />
-
-        {/* Interactive Triage Queue Dashboard Preview (PRD Sec 8.3 & FR9-FR10, FR16 Alerting, FR8 KPIs) */}
-        <LiveQueuePreview />
-
-        {/* Rolling Outage Volume & Historical Trend Analytics (PRD Sec 8.3 & FR12) */}
-        <ImpactTrendAnalytics />
-
-        {/* Scoring Methodology Pipeline (PRD Sec 6 & 7) */}
-        <MethodologySection />
-
-        {/* Technical PRD Requirements Explorer (FR1-FR16 & NFRs) */}
-        <PrdRequirementsExplorer />
-
-        {/* Business Case & ROI Savings Calculator (PRD Sec 10) */}
-        <RoiCalculator />
-      </main>
-
-      {/* Footer */}
-      <Footer />
+        <Footer />
+      </div>
     </div>
   );
 }

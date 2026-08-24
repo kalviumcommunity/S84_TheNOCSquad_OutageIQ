@@ -58,6 +58,7 @@ export default function RoiCalculator() {
                 max="500"
                 value={annualOutages}
                 onChange={(e) => setAnnualOutages(Number(e.target.value))}
+                onInput={(e) => setAnnualOutages(Number((e.target as HTMLInputElement).value))}
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
               />
             </div>
@@ -79,6 +80,7 @@ export default function RoiCalculator() {
                 step="500"
                 value={avgSlaPenalty}
                 onChange={(e) => setAvgSlaPenalty(Number(e.target.value))}
+                onInput={(e) => setAvgSlaPenalty(Number((e.target as HTMLInputElement).value))}
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
               />
             </div>
@@ -99,6 +101,7 @@ export default function RoiCalculator() {
                 max="50"
                 value={breachRate}
                 onChange={(e) => setBreachRate(Number(e.target.value))}
+                onInput={(e) => setBreachRate(Number((e.target as HTMLInputElement).value))}
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
               />
             </div>

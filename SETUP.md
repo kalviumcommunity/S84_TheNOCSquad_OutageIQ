@@ -3,6 +3,7 @@
 **Document Version:** 1.0.0 (Production Release)  
 **System Support:** Linux, macOS, WSL / Windows  
 **Architecture:** Unified Single-Server Python Engine & Decoupled Next.js Frontend  
+**Documentation Location:** Also available in [`docs/SETUP.md`](docs/SETUP.md)
 
 ---
 
