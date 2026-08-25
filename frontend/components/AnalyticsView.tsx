@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { fetchOutages, fetchAnalytics, fetchExecutiveSummary, AnalyticsData } from "@/lib/api";
 import { OutageItem, SEVEN_DAY_TREND, HOURLY_COMPLAINTS, INITIAL_OUTAGES } from "@/lib/data";
 import { downloadExecutivePdf } from "@/lib/pdf";
+import Link from "next/link";
 import {
   Download,
   FileText,
@@ -21,7 +22,8 @@ import {
   Sparkles,
   Award,
   DollarSign,
-  Layers
+  Layers,
+  Database
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -531,13 +533,22 @@ export default function AnalyticsView() {
           </div>
 
           {isLeadership && (
-            <button
-              onClick={handleExportPdf}
-              className="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto shadow-xs"
-            >
-              <Download className={`w-3.5 h-3.5 ${downloading ? "animate-bounce" : ""}`} />
-              <span>Export PDF Briefing</span>
-            </button>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <Link
+                href="/ingest"
+                className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>Ingest Data</span>
+              </Link>
+              <button
+                onClick={handleExportPdf}
+                className="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Download className={`w-3.5 h-3.5 ${downloading ? "animate-bounce" : ""}`} />
+                <span>Export PDF Briefing</span>
+              </button>
+            </div>
           )}
         </div>
 

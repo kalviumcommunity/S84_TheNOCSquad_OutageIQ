@@ -22,10 +22,10 @@ To eliminate data clutter, maintain strict **separation of duties**, and ensure 
 
 | User Profile | Dummy User ID (Login) | Password | Job Role & Focus | Primary Dashboard | Accessible Routes | Restricted Routes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Rahul K.** | `rahul.noc` *(or `rahul`)* | `noc@123` | **NOC Engineer**<br>*(Live Triage & Immediate Fixes)* | `/queue`<br>*(Outage Queue)* | `/queue`<br>`/overview`<br>`/` | `❌ /analytics`<br>`❌ /regions`<br>`❌ /export` |
-| **Priya S.** | `priya.ops` *(or `priya`)* | `ops@123` | **Regional Ops Manager**<br>*(Circle Density & SLA Compliance)* | `/regions`<br>*(Region View)* | `/regions`<br>`/queue`<br>`/overview`<br>`/` | `❌ /analytics`<br>`❌ /export` |
-| **Farah C.** | `farah.cx` *(or `farah`)* | `cx@123` | **Customer Experience Lead**<br>*(Hourly Complaints & Proactive Comms)* | `/analytics`<br>*(CX Hub)* | `/analytics`<br>`/overview`<br>`/` | `❌ /regions`<br>`❌ /queue` *(tech actions)*<br>`❌ /export` |
-| **Vikram D.** | `vikram.exec` *(or `vikram`)* | `exec@123` | **Leadership / Director**<br>*(Macro Trends, Revenue at Risk & PDF Reports)* | `/analytics`<br>*(Exec Summary)* | `/analytics`<br>`/export`<br>`/regions`<br>`/overview`<br>`/` | `❌ /queue` *(tactical tech actions)* |
+| **Rahul K.** | `rahul.noc` *(or `rahul`)* | `noc@123` | **NOC Engineer**<br>*(Live Triage & Immediate Fixes)* | `/queue`<br>*(Outage Queue)* | `/queue`<br>`/overview`<br>`/` | `❌ /ingest`<br>`❌ /analytics`<br>`❌ /regions`<br>`❌ /export` |
+| **Priya S.** | `priya.ops` *(or `priya`)* | `ops@123` | **Regional Ops Manager**<br>*(Circle Density & SLA Compliance)* | `/regions`<br>*(Region View)* | `/regions`<br>`/queue`<br>`/overview`<br>`/` | `❌ /ingest`<br>`❌ /analytics`<br>`❌ /export` |
+| **Farah C.** | `farah.cx` *(or `farah`)* | `cx@123` | **Customer Experience Lead**<br>*(Hourly Complaints & Proactive Comms)* | `/analytics`<br>*(CX Hub)* | `/analytics`<br>`/overview`<br>`/` | `❌ /ingest`<br>`❌ /regions`<br>`❌ /queue` *(tech actions)*<br>`❌ /export` |
+| **Vikram D.** | `vikram.exec` *(or `vikram`)* | `exec@123` | **Leadership / Director**<br>*(Data Ingestion Studio, Macro Trends & PDF Reports)* | `/ingest`<br>*(Data Ingestion)* | `/ingest`<br>`/analytics`<br>`/export`<br>`/regions`<br>`/overview`<br>`/` | `❌ /queue` *(tactical tech actions)* |
 
 ---
 
@@ -119,16 +119,18 @@ Farah protects customer satisfaction and brand Net Promoter Score (NPS) during s
 - **Official Job Title:** *Executive Director / VP of Network Infrastructure*
 
 #### 📋 What His Job Is (Responsibilities & Mission):
-Vikram oversees the entire network infrastructure from a strategic, financial, and executive governance perspective. His responsibility is to track macro enterprise resilience, monitor total **Revenue at Risk (₹42.3 Cr)** across all circles, analyze 7-day rolling outage volume curves, ensure quarterly regulatory SLA compliance, make CapEx network reinforcement investment decisions, and download 1-click confidential PDF incident briefings for C-suite and board meetings.
+Vikram oversees the entire network infrastructure from a strategic, financial, and executive governance perspective. His responsibility is to ingest live and simulated outage alerts (manually single-entry or via bulk CSV), review transparent mathematical scoring evaluations into SQLite, track macro enterprise resilience, monitor total **Revenue at Risk (₹42.3 Cr)** across all circles, analyze 7-day rolling outage volume curves, ensure quarterly regulatory SLA compliance, make CapEx network reinforcement investment decisions, and download 1-click confidential PDF incident briefings for C-suite and board meetings.
 
 #### 🖥️ His Tailored Dashboard & Layout:
-1. **Primary Landing Route:** `/analytics` (*Executive Incident Briefing & Strategy Center*)
+1. **Primary Landing Route:** `/ingest` (*Data Ingestion & Scoring Engine Studio*) & `/analytics` (*Executive Incident Briefing*)
 2. **Layout Characteristics:**
+   - **Executive Data Ingestion Studio (`/ingest`):** Single-incident telemetry ingress and bulk CSV processor with live 4-factor mathematical scoring evaluation visualizer and instant SQLite database commits.
+   - **Mathematical Computation Inspector:** Real-time transparent visualization of Reach (35%), Complaints (30%), Revenue (20%), and Duration (15%) subscore contributions summing to composite impact score and resolving priority tiers (P1/P2/P3).
    - **Executive Operations KPI Ribbon:** Highlighting Total Outages (84, ↑ 12% vs prior week), Avg Resolution Time (3h 52m), Revenue at Risk (₹42.3 Cr), and SLA Compliance (84%).
    - **7-Day Rolling Volume Curve & Mean Impact Score Trend:** Macro trend lines showing network performance across the week.
    - **1-Click Executive PDF Briefing Generator:** Direct button to produce RFC-compliant binary PDF reports formatted with tables, KPIs, and executive headers.
    - **Exportable Data Suite (`/export`):** Complete export capabilities for CSV data and confidential board PDFs.
-   - **Sidebar Navigation:** Shows **📊 Executive Summary & Trends**, **📑 Export Reports**, **🌐 Circle Strategy Matrix**, and **⚡ Macro Overview**.
+   - **Sidebar Navigation:** Shows **⚡ Data Ingestion (Exec Only)**, **📊 Executive Summary & Trends**, **📑 Export Reports**, **🌐 Circle Strategy Matrix**, and **⚡ Macro Overview**.
 
 #### 🚫 Access Restrictions & Rationale:
 - **Restricted from Tactical Queue Dispatching:** Vikram does not manipulate low-level technician tickboxes; he reviews macro performance indicators and strategic escalations.
@@ -139,6 +141,7 @@ Vikram oversees the entire network infrastructure from a strategic, financial, a
 
 | Route / Module | Route URL | Rahul K. (NOC) | Priya S. (Regional) | Farah C. (CX) | Vikram D. (Leadership) | Security & Permission Scope |
 | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Data Ingestion Studio** | `/ingest` | ❌ Restricted | ❌ Restricted | ❌ Restricted | ✅ **Exclusive Access** | Manual & Batch CSV Ingestion + Live Mathematical Scoring Evaluator |
 | **Login Portal** | `/login` | ✅ Allowed | ✅ Allowed | ✅ Allowed | ✅ Allowed | Public Authentication Gateway |
 | **Outage Queue** | `/queue` | ✅ **Primary** | ✅ Allowed | ❌ Restricted | ❌ Restricted | Tactical Incident Triage & Lead Assignment |
 | **Region View** | `/regions` | ❌ Restricted | ✅ **Primary** | ❌ Restricted | ✅ Allowed | Geographic Circle Health & SLA Density |

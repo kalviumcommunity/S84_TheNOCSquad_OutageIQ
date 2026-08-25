@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { INITIAL_OUTAGES, OutageItem } from "@/lib/data";
 import { escalateOutageApi, assignOutageApi } from "@/lib/api";
 import { useFilter } from "@/context/FilterContext";
@@ -268,6 +269,15 @@ export default function QueueView() {
                 <option value="complaints">Sort: Complaints</option>
                 <option value="duration">Sort: Duration</option>
               </select>
+
+              {user?.roleType === "leadership" && (
+                <Link
+                  href="/ingest"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <span>➕ Ingest Outage</span>
+                </Link>
+              )}
             </div>
           </div>
 

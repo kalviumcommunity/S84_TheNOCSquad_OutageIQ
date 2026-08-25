@@ -13,6 +13,7 @@ export default function RegionsView() {
   const { selectedRegion, setSelectedRegion } = useFilter();
   const [regions, setRegions] = useState<RegionMetric[]>(REGIONS_DATA);
   const [manualSelectedRegion, setManualSelectedRegion] = useState<RegionMetric | null>(null);
+  const { allOutages } = useFilter();
 
   useEffect(() => {
     let isMounted = true;
@@ -28,18 +29,36 @@ export default function RegionsView() {
     };
   }, []);
 
+  const dynamicRegions = useMemo(() => {
+    return regions.map((r) => {
+      const circleOutages = allOutages.filter(
+        (o) =>
+          (o.region.toLowerCase() === r.name.toLowerCase() ||
+            o.regionCode.toLowerCase() === r.id.toLowerCase()) &&
+          o.status !== "Resolved"
+      );
+      const activeCount = circleOutages.length;
+      const maxScore = circleOutages.length > 0 ? Math.max(...circleOutages.map((o) => o.impactScore)) : r.impactScore;
+      return {
+        ...r,
+        activeOutages: activeCount > 0 ? activeCount : r.activeOutages,
+        impactScore: circleOutages.length > 0 ? Math.round(maxScore) : r.impactScore,
+      };
+    }).sort((a, b) => b.impactScore - a.impactScore);
+  }, [regions, allOutages]);
+
   const selectedRegionMetric = useMemo(() => {
     if (manualSelectedRegion) {
       return manualSelectedRegion;
     }
     if (selectedRegion && selectedRegion !== "ALL") {
-      const match = regions.find(
+      const match = dynamicRegions.find(
         (r) => r.name.toLowerCase() === selectedRegion.toLowerCase() || r.id.toLowerCase() === selectedRegion.toLowerCase()
       );
       if (match) return match;
     }
-    return regions[0] || REGIONS_DATA[0];
-  }, [manualSelectedRegion, selectedRegion, regions]);
+    return dynamicRegions[0] || REGIONS_DATA[0];
+  }, [manualSelectedRegion, selectedRegion, dynamicRegions]);
 
   const handleSelectRegion = (reg: RegionMetric) => {
     setManualSelectedRegion(reg);
@@ -100,7 +119,7 @@ export default function RegionsView() {
 
           {/* List */}
           <div className="space-y-2.5 pt-1">
-            {regions.map((region, idx) => {
+            {dynamicRegions.map((region, idx) => {
               const isSelected = selectedRegionMetric.id === region.id;
               return (
                 <div
@@ -184,7 +203,7 @@ export default function RegionsView() {
               <text x="490" y="228" fontSize="8.5" fill="#9CA3AF" textAnchor="middle">100</text>
 
               {/* Region Bars */}
-              {regions.map((reg, i) => {
+              {dynamicRegions.map((reg, i) => {
                 const y = 15 + i * 24;
                 const barWidth = (reg.impactScore / 100) * 400;
                 const isSelected = selectedRegionMetric.id === reg.id;
