@@ -173,3 +173,114 @@ export async function fetchExecutiveSummary(): Promise<any | null> {
   }
   return null;
 }
+
+export async function createOutageApi(outageData: any): Promise<{ success: boolean; outage?: OutageItem; message?: string; evaluation?: any }> {
+  const payload = {
+    ...outageData,
+    user_role: "leadership",
+  };
+
+  try {
+    const res = await fetch("/api/outages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer leadership-exec" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        success: true,
+        outage: data.outage ? mapRowToOutageItem(data.outage) : undefined,
+        message: data.message,
+        evaluation: data.evaluation,
+      };
+    }
+  } catch (_) {
+    try {
+      const res2 = await fetch("http://localhost:8000/api/outages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer leadership-exec" },
+        body: JSON.stringify(payload),
+      });
+      if (res2.ok) {
+        const data = await res2.json();
+        return {
+          success: true,
+          outage: data.outage ? mapRowToOutageItem(data.outage) : undefined,
+          message: data.message,
+          evaluation: data.evaluation,
+        };
+      }
+    } catch (_) {}
+  }
+
+  return { success: false, message: "Failed to connect to backend server" };
+}
+
+export async function createBatchOutagesApi(
+  outagesOrCsv: { outages?: any[]; csv_data?: string }
+): Promise<{ success: boolean; count?: number; message?: string; created_records?: any[] }> {
+  const payload = {
+    ...outagesOrCsv,
+    user_role: "leadership",
+  };
+
+  try {
+    const res = await fetch("/api/outages/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer leadership-exec" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (_) {
+    try {
+      const res2 = await fetch("http://localhost:8000/api/outages/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer leadership-exec" },
+        body: JSON.stringify(payload),
+      });
+      if (res2.ok) {
+        return await res2.json();
+      }
+    } catch (_) {}
+  }
+
+  return { success: false, message: "Batch ingestion failed to connect to backend server" };
+}
+
+export async function evaluateScoreApi(inputData: any): Promise<any> {
+  try {
+    const res = await fetch("/api/evaluate-score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(inputData),
+    });
+    if (res.ok) return await res.json();
+  } catch (_) {
+    try {
+      const res2 = await fetch("http://localhost:8000/api/evaluate-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inputData),
+      });
+      if (res2.ok) return await res2.json();
+    } catch (_) {}
+  }
+  return null;
+}
+
+export async function resetDatabaseApi(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/reset-data", { method: "POST" });
+    if (res.ok) return true;
+  } catch (_) {
+    try {
+      const res2 = await fetch("http://localhost:8000/api/reset-data", { method: "POST" });
+      if (res2.ok) return true;
+    } catch (_) {}
+  }
+  return false;
+}
+

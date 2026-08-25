@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { INITIAL_OUTAGES, OutageItem } from "@/lib/data";
 import { escalateOutageApi, assignOutageApi } from "@/lib/api";
 import { useFilter } from "@/context/FilterContext";
@@ -15,7 +16,8 @@ import {
   CheckCircle2,
   AlertOctagon,
   Zap,
-  Activity
+  Activity,
+  Lock
 } from "lucide-react";
 
 export default function QueueView() {
@@ -268,6 +270,15 @@ export default function QueueView() {
                 <option value="complaints">Sort: Complaints</option>
                 <option value="duration">Sort: Duration</option>
               </select>
+
+              {user?.roleType === "leadership" && (
+                <Link
+                  href="/ingest"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <span>➕ Ingest Outage</span>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -514,22 +525,38 @@ export default function QueueView() {
             </div>
 
             {/* Action Dispatch Buttons */}
-            <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
-              <button
-                onClick={handleEscalate}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <ShieldAlert className="w-3.5 h-3.5" />
-                <span>Escalate Ticket</span>
-              </button>
+            <div className="pt-2 border-t border-gray-100 space-y-2">
+              {isNocEngineer ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleEscalate}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white text-xs font-bold py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    title="Escalate ticket to P1 Critical & dispatch emergency field technicians"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    <span>Escalate Ticket</span>
+                  </button>
 
-              <button
-                onClick={handleAssign}
-                className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-gray-500" />
-                <span>Assign Lead</span>
-              </button>
+                  <button
+                    onClick={handleAssign}
+                    className="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    title="Assign Tier-3 Optical Lead Engineer and mark In Progress"
+                  >
+                    <UserCheck className="w-3.5 h-3.5 text-gray-500" />
+                    <span>Assign Lead</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl space-y-1">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-700 font-mono">
+                    <Lock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Field Dispatch Controls Locked</span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 leading-tight">
+                    Emergency P1 escalation and Tier-3 lead assignment are exclusively reserved for <strong>Rahul K. (NOC Engineer)</strong>.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         ) : (

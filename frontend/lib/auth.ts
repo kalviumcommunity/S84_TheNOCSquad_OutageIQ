@@ -27,7 +27,7 @@ export interface UserAccount {
     name: string;
     href: string;
     aliases: string[];
-    iconName: "LayoutGrid" | "Zap" | "Globe" | "TrendingUp" | "Download" | "MessageSquare" | "Shield";
+    iconName: "LayoutGrid" | "Zap" | "Globe" | "TrendingUp" | "Download" | "MessageSquare" | "Shield" | "Database" | "PlusCircle" | "Sparkles";
     badge?: string;
   }[];
   visibleFilters: {
@@ -71,6 +71,12 @@ export const USER_ACCOUNTS: UserAccount[] = [
     primaryRouteName: "Outage Queue",
     allowedRoutes: ["/queue", "/outage-queue", "/overview", "/"],
     restrictedRoutes: [
+      {
+        route: "/ingest",
+        title: "Executive Data Ingestion & Scoring Engine",
+        reason: "Adding new raw outage telemetry, manual incident records, and CSV bulk data ingestion into SQLite is strictly restricted to the Executive Director.",
+        permittedRoles: ["Leadership / Director"]
+      },
       {
         route: "/analytics",
         title: "Executive Trend & Financial Analytics",
@@ -145,6 +151,12 @@ export const USER_ACCOUNTS: UserAccount[] = [
     allowedRoutes: ["/regions", "/region-view", "/queue", "/outage-queue", "/overview", "/"],
     restrictedRoutes: [
       {
+        route: "/ingest",
+        title: "Executive Data Ingestion & Scoring Engine",
+        reason: "Ingesting raw outage alerts and executing CSV bulk imports into the SQLite database is strictly restricted to the Executive Director.",
+        permittedRoles: ["Leadership / Director"]
+      },
+      {
         route: "/analytics",
         title: "Executive Trend & Financial Analytics",
         reason: "Corporate macro 7-day trend analysis, executive financial forecasts, and high-level revenue modeling are restricted to Executive Leadership.",
@@ -218,6 +230,12 @@ export const USER_ACCOUNTS: UserAccount[] = [
     allowedRoutes: ["/analytics", "/overview", "/"],
     restrictedRoutes: [
       {
+        route: "/ingest",
+        title: "Executive Data Ingestion & Scoring Engine",
+        reason: "Adding new telemetry records, running mathematical scoring evaluations, and committing data to SQLite is reserved for the Executive Director.",
+        permittedRoles: ["Leadership / Director"]
+      },
+      {
         route: "/regions",
         title: "Regional Physical Infrastructure Topology",
         reason: "Low-level circle physical engineering topology and maintenance rosters are restricted to Regional Ops Managers.",
@@ -278,17 +296,17 @@ export const USER_ACCOUNTS: UserAccount[] = [
     roleType: "leadership",
     department: "Executive Leadership & Network Infrastructure VP Office",
     jobTitle: "Executive Director / VP of Network Infrastructure",
-    jobSummary: "Directs overarching network reliability strategy, reviews 7-day rolling outage volume and impact score trends, monitors aggregate enterprise Revenue at Risk (₹42.3 Cr), enforces regulatory SLA compliance, and generates 1-click executive PDF board briefings.",
+    jobSummary: "Directs overarching network reliability strategy, possesses exclusive authorization to ingest new outage records (manually or via bulk CSV), evaluates transparent mathematical scoring equations into SQLite, reviews 7-day rolling volume curves, and generates 1-click executive PDF briefings.",
     keyResponsibilities: [
+      "Ingesting new outage incident data manually or via bulk CSV with live mathematical evaluation",
+      "Evaluating 4-factor scoring logic and committing persistent records to SQLite database",
       "Reviewing macro 7-day outage volume trajectories and average Impact Score velocity",
       "Monitoring aggregate enterprise Revenue at Risk (₹42.3 Cr) across operating circles",
-      "Tracking quarterly SLA compliance scorecards and penalty exposure",
-      "Generating and downloading formal executive PDF Incident Briefings for C-suite and board stakeholders",
-      "Overseeing strategic capital expenditure (CapEx) infrastructure reinforcement decisions"
+      "Tracking quarterly SLA compliance scorecards and downloading formal executive PDF briefings"
     ],
     primaryRoute: "/analytics",
     primaryRouteName: "Executive Summary",
-    allowedRoutes: ["/analytics", "/export", "/exportable-data", "/regions", "/region-view", "/overview", "/"],
+    allowedRoutes: ["/ingest", "/data-intake", "/analytics", "/export", "/exportable-data", "/regions", "/region-view", "/overview", "/"],
     restrictedRoutes: [
       {
         route: "/queue",
@@ -298,6 +316,13 @@ export const USER_ACCOUNTS: UserAccount[] = [
       }
     ],
     allowedNavItems: [
+      {
+        name: "Data Ingestion",
+        href: "/ingest",
+        aliases: ["/ingest", "/data-intake"],
+        iconName: "Database",
+        badge: "Exec Ingress"
+      },
       {
         name: "Executive Summary",
         href: "/analytics",

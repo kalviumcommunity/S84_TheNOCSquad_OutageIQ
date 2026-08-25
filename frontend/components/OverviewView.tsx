@@ -85,13 +85,23 @@ export default function OverviewView() {
             </div>
           </div>
 
-          <Link
-            href={user.primaryRoute}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 active:scale-95 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-purple-600/30 self-start sm:self-auto shrink-0 cursor-pointer"
-          >
-            <span>Open {user.primaryRouteName}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            {user.roleType === "leadership" && (
+              <Link
+                href="/ingest"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-amber-600/30 cursor-pointer"
+              >
+                <span>➕ Ingest / Add Data</span>
+              </Link>
+            )}
+            <Link
+              href={user.primaryRoute}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 active:scale-95 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-purple-600/30 cursor-pointer"
+            >
+              <span>Open {user.primaryRouteName}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
       )}
 

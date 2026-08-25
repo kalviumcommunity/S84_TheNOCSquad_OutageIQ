@@ -15,7 +15,11 @@ import {
   Shield,
   Search,
   CheckCircle2,
-  Lock
+  Lock,
+  Database,
+  PlusCircle,
+  Sparkles,
+  Layers
 } from "lucide-react";
 import { useFilter } from "@/context/FilterContext";
 import { useAuth } from "@/context/AuthContext";
@@ -69,7 +73,11 @@ export default function Sidebar({
     Globe,
     TrendingUp,
     Download,
-    Shield
+    Shield,
+    Database,
+    PlusCircle,
+    Sparkles,
+    Layers
   };
 
   // If user is authenticated, use their role-permitted nav items; otherwise fallback to default

@@ -354,6 +354,139 @@ def seed_sample_data(conn):
     conn.commit()
 
 # -------------------------------------------------------------
+# OutageIQ Scoring Evaluation & Region Metadata
+# -------------------------------------------------------------
+
+REGION_METADATA = {
+    "mumbai": {"id": "mum", "code": "MUM", "tier": "Premium", "hourly": "₹38.5 L/hr", "name": "Mumbai", "subs": 4200000},
+    "delhi ncr": {"id": "del", "code": "DEL", "tier": "Premium", "hourly": "₹32.0 L/hr", "name": "Delhi NCR", "subs": 3800000},
+    "delhi": {"id": "del", "code": "DEL", "tier": "Premium", "hourly": "₹32.0 L/hr", "name": "Delhi NCR", "subs": 3800000},
+    "bangalore": {"id": "blr", "code": "BLR", "tier": "Premium", "hourly": "₹24.5 L/hr", "name": "Bangalore", "subs": 2900000},
+    "chennai": {"id": "maa", "code": "MAA", "tier": "High", "hourly": "₹18.0 L/hr", "name": "Chennai", "subs": 1800000},
+    "hyderabad": {"id": "hyd", "code": "HYD", "tier": "High", "hourly": "₹14.2 L/hr", "name": "Hyderabad", "subs": 2100000},
+    "pune": {"id": "pun", "code": "PUN", "tier": "Mid", "hourly": "₹9.8 L/hr", "name": "Pune", "subs": 1400000},
+    "kolkata": {"id": "ccu", "code": "CCU", "tier": "Mid", "hourly": "₹6.4 L/hr", "name": "Kolkata", "subs": 1200000},
+    "ahmedabad": {"id": "amd", "code": "AMD", "tier": "Standard", "hourly": "₹2.2 L/hr", "name": "Ahmedabad", "subs": 900000},
+    "jaipur": {"id": "jai", "code": "JAI", "tier": "Standard", "hourly": "₹1.1 L/hr", "name": "Jaipur", "subs": 800000},
+}
+
+def compute_outage_scoring_evaluation(data):
+    """
+    Evaluates subscores, contributions, composite impact score, priority tier, and SLA status
+    according to the mathematical formula:
+    Impact Score = 0.35 * S_reach + 0.30 * S_complaints + 0.20 * S_revenue + 0.15 * S_duration
+    """
+    subscribers = float(data.get("subscribers_affected") or data.get("subscribers") or 0)
+    complaints = float(data.get("complaints_count") or data.get("complaints") or 0)
+    duration_hours = float(data.get("duration_hours") or 1.0)
+    
+    region_name = str(data.get("region_name") or data.get("region") or "Mumbai").strip()
+    reg_meta = REGION_METADATA.get(region_name.lower(), {
+        "id": region_name[:3].lower(), "code": region_name[:3].upper(), "tier": "High", "hourly": "₹15.0 L/hr", "name": region_name, "subs": 1500000
+    })
+    
+    revenue_tier = str(data.get("revenue_tier") or reg_meta["tier"]).capitalize()
+    severity = str(data.get("severity") or "Medium").capitalize()
+    
+    # 1. Customer Reach Subscore (0 - 100)
+    subscore_reach = min(100.0, max(0.0, (subscribers / 50000.0) * 100.0))
+    reach_pts = round(subscore_reach * 0.35, 2)
+    
+    # 2. Complaint Pressure Subscore (0 - 100)
+    subscore_complaints = min(100.0, max(0.0, (complaints / 2000.0) * 100.0))
+    complaints_pts = round(subscore_complaints * 0.30, 2)
+    
+    # 3. Revenue Exposure Subscore (0 - 100)
+    tier_map = {"Premium": 95.0, "High": 75.0, "Mid": 55.0, "Standard": 30.0}
+    subscore_revenue = tier_map.get(revenue_tier, 70.0)
+    revenue_pts = round(subscore_revenue * 0.20, 2)
+    
+    # 4. Duration & Severity Escalation Subscore (0 - 100)
+    sev_base_map = {"Critical": 80.0, "High": 60.0, "Medium": 40.0, "Low": 20.0}
+    sev_base = sev_base_map.get(severity, 40.0)
+    dur_factor = min(1.5, 1.0 + (duration_hours / 10.0))
+    subscore_duration = min(100.0, round(sev_base * dur_factor, 1))
+    duration_pts = round(subscore_duration * 0.15, 2)
+    
+    # Composite Score (0.0 to 100.0)
+    total_score = round(reach_pts + complaints_pts + revenue_pts + duration_pts, 1)
+    total_score = max(0.0, min(100.0, total_score))
+    
+    # Priority Tier Resolution Logic
+    if total_score >= 75.0:
+        priority_tier = "P1"
+        sla_target_hours = 2.0
+    elif total_score >= 50.0:
+        priority_tier = "P2"
+        sla_target_hours = 4.0
+    elif total_score >= 25.0:
+        priority_tier = "P3"
+        sla_target_hours = 8.0
+    else:
+        priority_tier = "P3"
+        sla_target_hours = 24.0
+        
+    # SLA Status Calculation
+    if duration_hours > sla_target_hours:
+        sla_status = "BREACHED"
+    elif duration_hours >= (sla_target_hours * 0.75):
+        sla_status = "AT_RISK"
+    else:
+        sla_status = "ON_TRACK"
+        
+    # Duration formatted text
+    hours_int = int(duration_hours)
+    mins_int = int(round((duration_hours - hours_int) * 60))
+    duration_text = f"{hours_int}h {mins_int:02d}m" if mins_int > 0 else f"{hours_int}h 00m"
+    
+    return {
+        "impact_score": total_score,
+        "priority_tier": priority_tier,
+        "sla_status": sla_status,
+        "sla_target_hours": sla_target_hours,
+        "duration_text": duration_text,
+        "revenue_tier": revenue_tier,
+        "revenue_exposure_hourly": data.get("revenue_exposure_hourly") or reg_meta["hourly"],
+        "subscores": {
+            "reach": round(subscore_reach, 1),
+            "complaints": round(subscore_complaints, 1),
+            "revenue": round(subscore_revenue, 1),
+            "duration": round(subscore_duration, 1),
+        },
+        "contributions": {
+            "reach": reach_pts,
+            "complaints": complaints_pts,
+            "revenue": revenue_pts,
+            "duration": duration_pts,
+        },
+        "formula": {
+            "equation": "Impact Score = (0.35 × S_reach) + (0.30 × S_complaints) + (0.20 × S_revenue) + (0.15 × S_duration)",
+            "calculation": f"({reach_pts} pts) + ({complaints_pts} pts) + ({revenue_pts} pts) + ({duration_pts} pts) = {total_score} / 100",
+            "tier_rule": "Score >= 75.0 → P1 (Critical) | 50.0 - 74.9 → P2 (High) | 25.0 - 49.9 → P3 (Medium) | < 25.0 → P3 (Low)"
+        },
+        "region_meta": reg_meta
+    }
+
+def update_region_aggregations(conn):
+    """Dynamically recalculate and sync region-level active outages and average scores."""
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT region_name, COUNT(*) as active_cnt, AVG(impact_score) as avg_score, MAX(impact_score) as max_score
+        FROM outages
+        WHERE status != 'Resolved'
+        GROUP BY region_name
+    """)
+    rows = cursor.fetchall()
+    for reg_name, act_cnt, avg_sc, max_sc in rows:
+        reg_id = REGION_METADATA.get(reg_name.lower(), {}).get("id", reg_name[:3].lower())
+        cursor.execute("""
+            UPDATE regions
+            SET active_outages = ?, impact_score = ROUND(?, 1)
+            WHERE region_id = ? OR name = ?
+        """, (act_cnt, max_sc or avg_sc or 50.0, reg_id, reg_name))
+    conn.commit()
+
+# -------------------------------------------------------------
 # OutageIQ Single Server HTTP Request Handler
 # -------------------------------------------------------------
 
@@ -614,7 +747,177 @@ class OutageIQHandler(BaseHTTPRequestHandler):
         conn = sqlite3.connect(get_config("DB_PATH"))
         cursor = conn.cursor()
 
-        if path == "/api/recalculate":
+        if path == "/api/evaluate-score":
+            eval_result = compute_outage_scoring_evaluation(body)
+            self._set_headers(200)
+            self.wfile.write(json.dumps(eval_result).encode())
+
+        elif path == "/api/outages":
+            # Executive Director Ingress - Single Record
+            user_role = str(body.get("user_role", "")).lower()
+            auth_header = str(self.headers.get("Authorization", "")).lower()
+            
+            # Mathematical Scoring Evaluation
+            evaluation = compute_outage_scoring_evaluation(body)
+            reg_meta = evaluation["region_meta"]
+            
+            import time
+            outage_id = str(body.get("outage_id") or "").strip()
+            if not outage_id:
+                outage_id = f"OUT-2026-0825-N{int(time.time() * 1000) % 900 + 100}"
+                
+            short_id = str(body.get("short_id") or "").strip()
+            if not short_id:
+                parts = outage_id.split("-")
+                short_id = f"{parts[-2]}-{parts[-1]}" if len(parts) >= 3 else outage_id
+                
+            region_name = reg_meta["name"]
+            region_code = reg_meta["code"]
+            node_id = str(body.get("node_id") or body.get("node") or f"Node-{region_code}-01")
+            severity = str(body.get("severity") or "Medium").capitalize()
+            impact_score = evaluation["impact_score"]
+            status = str(body.get("status") or "Open")
+            complaints_count = int(body.get("complaints_count") or body.get("complaints") or 0)
+            duration_text = evaluation["duration_text"]
+            duration_hours = float(body.get("duration_hours") or 1.0)
+            priority_tier = evaluation["priority_tier"]
+            subscribers_affected = int(body.get("subscribers_affected") or body.get("subscribers") or 0)
+            revenue_exposure_hourly = str(body.get("revenue_exposure_hourly") or evaluation["revenue_exposure_hourly"])
+            sla_status = evaluation["sla_status"]
+            sla_target_hours = evaluation["sla_target_hours"]
+            subscore_reach = evaluation["subscores"]["reach"]
+            subscore_complaints = evaluation["subscores"]["complaints"]
+            subscore_revenue = evaluation["subscores"]["revenue"]
+            subscore_duration = evaluation["subscores"]["duration"]
+            root_cause = str(body.get("root_cause") or "Under Investigation by Optical Field Response")
+            created_at = datetime.now(timezone.utc).isoformat()
+
+            cursor.execute("""
+            INSERT OR REPLACE INTO outages (
+                outage_id, short_id, region_name, region_code, node_id, severity, impact_score, status,
+                complaints_count, duration_text, duration_hours, priority_tier, subscribers_affected,
+                revenue_exposure_hourly, sla_status, sla_target_hours, subscore_reach, subscore_complaints,
+                subscore_revenue, subscore_duration, root_cause, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                outage_id, short_id, region_name, region_code, node_id, severity, impact_score, status,
+                complaints_count, duration_text, duration_hours, priority_tier, subscribers_affected,
+                revenue_exposure_hourly, sla_status, sla_target_hours, subscore_reach, subscore_complaints,
+                subscore_revenue, subscore_duration, root_cause, created_at
+            ))
+            
+            update_region_aggregations(conn)
+            conn.commit()
+
+            # Retrieve the newly inserted record
+            cursor.execute("SELECT * FROM outages WHERE outage_id = ?", (outage_id,))
+            row = dict(cursor.fetchone())
+
+            self._set_headers(201)
+            self.wfile.write(json.dumps({
+                "success": True,
+                "message": f"Outage {outage_id} evaluated with Impact Score {impact_score} ({priority_tier}) and committed to SQLite.",
+                "outage": row,
+                "evaluation": evaluation
+            }).encode())
+
+        elif path == "/api/outages/batch":
+            # Executive Director Ingress - Batch Records / CSV Ingestion
+            raw_outages = body.get("outages", [])
+            csv_data = body.get("csv_data", "")
+            
+            if csv_data and not raw_outages:
+                # Parse CSV string
+                lines = [line.strip() for line in csv_data.strip().split("\n") if line.strip()]
+                if len(lines) >= 2:
+                    header = [h.strip().lower().replace(" ", "_") for h in lines[0].split(",")]
+                    for line in lines[1:]:
+                        vals = [v.strip().strip('"').strip("'") for v in line.split(",")]
+                        if len(vals) == len(header):
+                            row_dict = dict(zip(header, vals))
+                            raw_outages.append(row_dict)
+
+            created_records = []
+            import time
+            base_time = int(time.time() * 1000)
+
+            for idx, item in enumerate(raw_outages):
+                evaluation = compute_outage_scoring_evaluation(item)
+                reg_meta = evaluation["region_meta"]
+                
+                outage_id = str(item.get("outage_id") or "").strip()
+                if not outage_id:
+                    outage_id = f"OUT-2026-0825-N{((base_time + idx) % 900) + 100}"
+                    
+                short_id = str(item.get("short_id") or "").strip()
+                if not short_id:
+                    parts = outage_id.split("-")
+                    short_id = f"{parts[-2]}-{parts[-1]}" if len(parts) >= 3 else outage_id
+                    
+                region_name = reg_meta["name"]
+                region_code = reg_meta["code"]
+                node_id = str(item.get("node_id") or item.get("node") or f"Node-{region_code}-{idx+1:02d}")
+                severity = str(item.get("severity") or "Medium").capitalize()
+                impact_score = evaluation["impact_score"]
+                status = str(item.get("status") or "Open")
+                complaints_count = int(item.get("complaints_count") or item.get("complaints") or 0)
+                duration_text = evaluation["duration_text"]
+                duration_hours = float(item.get("duration_hours") or 1.0)
+                priority_tier = evaluation["priority_tier"]
+                subscribers_affected = int(item.get("subscribers_affected") or item.get("subscribers") or 0)
+                revenue_exposure_hourly = str(item.get("revenue_exposure_hourly") or evaluation["revenue_exposure_hourly"])
+                sla_status = evaluation["sla_status"]
+                sla_target_hours = evaluation["sla_target_hours"]
+                subscore_reach = evaluation["subscores"]["reach"]
+                subscore_complaints = evaluation["subscores"]["complaints"]
+                subscore_revenue = evaluation["subscores"]["revenue"]
+                subscore_duration = evaluation["subscores"]["duration"]
+                root_cause = str(item.get("root_cause") or "Batch Ingestion Incident Record")
+                created_at = datetime.now(timezone.utc).isoformat()
+
+                cursor.execute("""
+                INSERT OR REPLACE INTO outages (
+                    outage_id, short_id, region_name, region_code, node_id, severity, impact_score, status,
+                    complaints_count, duration_text, duration_hours, priority_tier, subscribers_affected,
+                    revenue_exposure_hourly, sla_status, sla_target_hours, subscore_reach, subscore_complaints,
+                    subscore_revenue, subscore_duration, root_cause, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    outage_id, short_id, region_name, region_code, node_id, severity, impact_score, status,
+                    complaints_count, duration_text, duration_hours, priority_tier, subscribers_affected,
+                    revenue_exposure_hourly, sla_status, sla_target_hours, subscore_reach, subscore_complaints,
+                    subscore_revenue, subscore_duration, root_cause, created_at
+                ))
+                created_records.append({
+                    "outage_id": outage_id,
+                    "region": region_name,
+                    "impact_score": impact_score,
+                    "priority_tier": priority_tier,
+                    "severity": severity,
+                    "sla_status": sla_status
+                })
+
+            update_region_aggregations(conn)
+            conn.commit()
+
+            self._set_headers(201)
+            self.wfile.write(json.dumps({
+                "success": True,
+                "message": f"Successfully evaluated and ingested {len(created_records)} outage records into SQLite.",
+                "count": len(created_records),
+                "created_records": created_records
+            }).encode())
+
+        elif path == "/api/reset-data":
+            # Reset SQLite database to initial high-fidelity seed state
+            cursor.execute("DELETE FROM outages")
+            cursor.execute("DELETE FROM regions")
+            conn.commit()
+            seed_sample_data(conn)
+            self._set_headers(200)
+            self.wfile.write(json.dumps({"success": True, "message": "Database reset to initial sample state"}).encode())
+
+        elif path == "/api/recalculate":
             w_reach = float(body.get("weight_reach", get_config("IMPACT_WEIGHT_REACH")))
             w_comp = float(body.get("weight_complaints", get_config("IMPACT_WEIGHT_COMPLAINTS")))
             w_rev = float(body.get("weight_revenue", get_config("IMPACT_WEIGHT_REVENUE")))
